@@ -164,7 +164,21 @@ if (nrow(duplicate_keys) == 0) {
 
 ###  Identification of Dimensions in bed_type.csv and business.csv
 
--   TODO
+```{r}
+str(bed_type_df)
+str(business_df)
+```
+
+* bed_type_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
+  * bed_id (primary key) assigns a unique identifier for each type of bed
+  * bed_code contains abbreviations for each type of bed
+  * bed_desc contains descriptions of each type of bed
+
+* business_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
+  * ims_org_id (primary key) assigns a unique identifier for each business
+  * business_name contains the names of the organizations
+  * bed_cluster_id categorizes bed clusters from 1-9
+* The remaining columns ttl_license_beds, ttl_census_beds, and ttl_staffed_beds are facts due to their quantitative nature 
 
 ### Identification of Fact Variables in bed_fact.csv
 
