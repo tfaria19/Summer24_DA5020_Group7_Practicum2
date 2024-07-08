@@ -38,6 +38,44 @@ summary(bed_fact_df)
 print("Summary of business.csv")
 summary(business_df)
 
+# Outlier identification
+# Compute outliers for each bed type in business_df
+business_outliers <- business_df %>%
+  mutate(
+    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
+    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
+    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
+    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
+    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
+    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
+  ) %>%
+  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
+  filter(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds) %>%
+  filter(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds) %>%
+  filter(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds) %>%
+  select(ttl_license_beds, ttl_census_beds, ttl_staffed_beds)
+
+business_outliers
+
+# Remove outliers from dataset
+rmv_business_outliers <- business_df %>%
+  mutate(
+    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
+    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
+    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
+    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
+    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
+    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
+  ) %>%
+  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
+  filter(!(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds)) %>%
+  filter(!(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds)) %>%
+  filter(!(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds))
+
+# Note subtracted outliers from new dataframe
+str(business_df)
+str(rmv_business_outliers)
+
 # Basic histograms for outlier visualization
 ggplot(bed_fact_df, aes(x = license_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
