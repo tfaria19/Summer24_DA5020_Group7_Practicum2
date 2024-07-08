@@ -21,8 +21,8 @@ library(RSQLite)
 ```{r, load}
 
 # Load data
-bed_fact_df <- read_csv("data/bed_fact.csv", show_col_types = FALSE)
 bed_type_df <- read_csv("data/bed_type.csv", show_col_types = FALSE)
+bed_fact_df <- read_csv("data/bed_fact.csv", show_col_types = FALSE)
 business_df <- read_csv("data/business.csv", show_col_types = FALSE)
 
 ```
@@ -30,12 +30,41 @@ business_df <- read_csv("data/business.csv", show_col_types = FALSE)
 ```{r, explore}
 
 # Explore data
+print("Summary of bed_type.csv")
+summary(bed_type_df)
+print("Summary of bed_fact.csv")
 summary(bed_fact_df)
+print("Summary of business.csv")
+summary(business_df)
+
+# Basic histograms for outlier visualization
+ggplot(bed_fact_df, aes(x = license_beds)) +
+  geom_histogram(binwidth = 2, color = "black") +
+  scale_x_continuous(limits = c(-1, 3000)) +
+  scale_y_continuous(limits = c(-1, 3000)) +
+  labs(title = "Data Distribution - bed_fact.csv", x = "# of License Beds", y = "Frequency") +
+  theme_minimal()
+
+ggplot(bed_fact_df, aes(x = census_beds)) +
+  geom_histogram(binwidth = 2, color = "black") +
+  scale_x_continuous(limits = c(-1, 3000)) +
+  scale_y_continuous(limits = c(-1, 3000)) +
+  labs(title = "Data Distribution - bed_fact.csv", x = "# of Census Beds", y = "Frequency") +
+  theme_minimal()
+
+ggplot(bed_fact_df, aes(x = staffed_beds)) +
+  geom_histogram(binwidth = 2, color = "black") +
+  scale_x_continuous(limits = c(-1, 3000)) +
+  scale_y_continuous(limits = c(-1, 3000)) +
+  labs(title = "Data Distribution - bed_fact.csv", x = "# of Staffed Beds", y = "Frequency") +
+  theme_minimal()
+
 ```
 
 ```{r, tidy}
 
 # Tidy data if necessary
+
 ```
 
 ```{r, create_db}
