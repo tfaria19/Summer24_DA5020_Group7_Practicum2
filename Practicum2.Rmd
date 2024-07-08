@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readr)
 library(RSQLite)
+
 ```
 
 ### Loading and data exploration
@@ -124,6 +125,7 @@ if (!table_exists(p2_connection, "business_table")) {
 dbWriteTable(p2_connection, "bed_type_table", bed_type_df, overwrite = TRUE, row.names = FALSE)
 dbWriteTable(p2_connection, "bed_fact_table", bed_fact_df, overwrite = TRUE, row.names = FALSE)
 dbWriteTable(p2_connection, "business_table", business_df, overwrite = TRUE, row.names = FALSE)
+
 ```
 
 ```{r, check_composite_pks}
@@ -157,4 +159,59 @@ if (nrow(duplicate_keys) == 0) {
   print("Duplicate keys found in business_table !! Composite PK is not valid.")
   print(duplicate_keys)
 }
+
 ```
+
+###  Identification of Dimensions in bed_type.csv and business.csv
+
+-   TODO
+
+### Identification of Fact Variables in bed_fact.csv
+
+-   TODO
+
+### Initial Analysis for Leadership
+
+```{r, license_beds_separate}
+# Thomas
+
+```
+
+```{r, census_beds_separate}
+# Caitlin
+
+```
+
+```{r, staffed_beds_separate}
+# Sairah
+
+```
+
+### Interpretation of Findings (Pt. 1)
+
+TODO
+
+### Follow-up Analysis for Leadership (identifying hospitals with both ICU and SICU volume sufficiency)
+
+```{r, license_beds_combined}
+# Thomas
+
+```
+
+```{r, census_beds_combined}
+# Caitlin
+
+```
+
+```{r, staffed_beds_combined}
+# Sairah
+
+```
+
+### Interpretation of Findings (Pt. 2)
+
+TODO
+
+### Final Recommendation
+
+TODO
