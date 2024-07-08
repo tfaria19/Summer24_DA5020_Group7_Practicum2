@@ -1,0 +1,34 @@
+---
+title: "Practicum2"
+author: "Thomas Faria, Caitlin Kirkpatrick, Sairah Shir"
+date: "2024-07-14"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load required packages for Practicum2
+library(tidyverse)
+library(readr)
+library(RSQLite)
+```
+
+### Loading and data exploration
+
+```{r, load}
+
+# Load data
+bed_fact_df <- read_csv("bed_fact.csv", show_col_types = FALSE)
+bed_type_df <- read_csv("bed_type.csv", show_col_types = FALSE)
+business_df <- read_csv("business.csv", show_col_types = FALSE)
+
+```
+
+```{r, explore}
+
+# Explore data
+
+```
