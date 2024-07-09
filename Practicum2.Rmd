@@ -220,7 +220,10 @@ str(business_df)
 
 ### Identification of Fact Variables in bed_fact.csv
 
--   TODO
+* bed_fact_df has one dimension that is qualitative nature:
+  * ims_org_id (primary key) is a dimension as it assigns unique identifier for each business  
+* bed_fact_df has for facts: 
+  * Bed_id, license_bed, census_bed, staffed_bed are all facts due to the numerical data  
 
 ### Initial Analysis for Leadership
 
