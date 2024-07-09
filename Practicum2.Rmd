@@ -230,12 +230,12 @@ str(business_df)
 ```
 
 ```{r, census_beds_separate}
-# Caitlin
+# Sairah
 
 ```
 
 ```{r, staffed_beds_separate}
-# Sairah
+# Caitlin
 
 ```
 
