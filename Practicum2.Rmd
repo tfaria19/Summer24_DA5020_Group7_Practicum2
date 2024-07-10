@@ -166,9 +166,9 @@ dbWriteTable(p2_connection, "business_table", business_df, overwrite = TRUE, row
 
 ```
 
-* bed_fact_table, bed_type_table, and business_table are loaded from their corresponding R dataframes
+-   bed_fact_table, bed_type_table, and business_table are loaded from their corresponding R dataframes
 
-``` {r, combined table}
+```{r, combined_table}
 # Create combined_table, if it doesn't already exist
 if (!table_exists(p2_connection, "combined_table")) {
   dbExecute(p2_connection, "
@@ -216,13 +216,13 @@ str(combined_df)
 
 ```
 
-* combined_table is loaded from the existing db tables and then loaded into combined_df
+-   combined_table is loaded from the existing db tables and then loaded into combined_df
 
 ```{r, check_composite_pks}
 
 # Verify the uniqueness of the composite primary keys used in bed_fact_table (combination of ims_org_id and bed_id) and business_table (combination of ims_org_id and bed_cluster_id)
 
-duplicate_keys <- dbGetQuery(connection, "
+duplicate_keys <- dbGetQuery(p2_connection, "
                              SELECT ims_org_id, bed_id, COUNT(*)
                              FROM bed_fact_table
                              GROUP BY ims_org_id, bed_id
@@ -236,7 +236,7 @@ if (nrow(duplicate_keys) == 0) {
   print(duplicate_keys)
 }
 
-duplicate_keys <- dbGetQuery(connection, "
+duplicate_keys <- dbGetQuery(p2_connection, "
                              SELECT ims_org_id, bed_cluster_id, COUNT(*)
                              FROM business_table
                              GROUP BY ims_org_id, bed_cluster_id
@@ -252,36 +252,67 @@ if (nrow(duplicate_keys) == 0) {
 
 ```
 
-###  Identification of Dimensions in bed_type.csv and business.csv
+### Identification of Dimensions in bed_type.csv and business.csv
 
 ```{r}
 str(bed_type_df)
 str(business_df)
 ```
 
-* bed_type_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
-  * bed_id (primary key) assigns a unique identifier for each type of bed
-  * bed_code contains abbreviations for each type of bed
-  * bed_desc contains descriptions of each type of bed
-
-* business_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
-  * ims_org_id (primary key) assigns a unique identifier for each business
-  * business_name contains the names of the organizations
-  * bed_cluster_id categorizes bed clusters from 1-9
-* The remaining columns ttl_license_beds, ttl_census_beds, and ttl_staffed_beds are facts due to their quantitative nature 
+-   bed_type_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
+    -   bed_id (primary key) assigns a unique identifier for each type of bed
+    -   bed_code contains abbreviations for each type of bed
+    -   bed_desc contains descriptions of each type of bed
+-   business_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
+    -   ims_org_id (primary key) assigns a unique identifier for each business
+    -   business_name contains the names of the organizations
+    -   bed_cluster_id categorizes bed clusters from 1-9
+-   The remaining columns ttl_license_beds, ttl_census_beds, and ttl_staffed_beds are facts due to their quantitative nature
 
 ### Identification of Fact Variables in bed_fact.csv
 
-* bed_fact_df has one dimension that is qualitative nature:
-  * ims_org_id (primary key) is a dimension as it assigns unique identifier for each business  
-* bed_fact_df has for facts: 
-  * Bed_id, license_bed, census_bed, staffed_bed are all facts due to the numerical data  
+-   bed_fact_df has one dimension that is qualitative nature:
+    -   ims_org_id (primary key) is a dimension as it assigns unique identifier for each business\
+-   bed_fact_df has for facts:
+    -   Bed_id, license_bed, census_bed, staffed_bed are all facts due to the numerical data
 
 ### Initial Analysis for Leadership
 
 ```{r, license_beds_separate}
-# Thomas
 
+license_beds_ICU <- "SELECT business_table.business_name AS hospital_name,
+--- Take the sum of the license beds in a new column total_icu_license_beds ---
+SUM(bed_fact_table.license_beds) AS total_icu_license_beds
+FROM business_table
+--- Inner join bed_fact_table with business_table on ims_org_id ---
+JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
+--- Only include rows where bed_id is 4 (ICU) ---
+WHERE bed_fact_table.bed_id = 4
+--- Group by hospital_name ---
+GROUP BY business_table.business_name
+--- Arrange in descending order ---
+ORDER BY total_icu_license_beds DESC
+--- Only include top 10 hospitals ---
+LIMIT 10;"
+
+license_beds_ICU_df <- dbGetQuery(p2_connection, license_beds_ICU)
+
+license_beds_SICU <- "SELECT business_table.business_name AS hospital_name,
+--- Take the sum of the license beds in a new column total_sicu_license_beds ---
+SUM(bed_fact_table.license_beds) AS total_sicu_license_beds
+FROM business_table
+--- Inner join bed_fact_table with business_table on ims_org_id ---
+JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
+--- Only include rows where bed_id is 15 (SICU) ---
+WHERE bed_fact_table.bed_id = 15
+--- Group by hospital_name ---
+GROUP BY business_table.business_name
+--- Arrange in descending order ---
+ORDER BY total_sicu_license_beds DESC
+--- Only include top 10 hospitals ---
+LIMIT 10;"
+
+license_beds_SICU_df <- dbGetQuery(p2_connection, license_beds_SICU)
 ```
 
 ```{r, census_beds_separate}
@@ -305,20 +336,19 @@ staffed_beds_separate <- "SELECT business_table.business_name AS hospital_name,
                           --- Only include top 10 hospitals ---
                           LIMIT 10;"
 
-dbGetQuery(p2_connection, staffed_beds_separate)
+staffed_beds_separate_df <- dbGetQuery(p2_connection, staffed_beds_separate)
 ```
 
-* bed_fact_table contains information about the hospital beds:
-  * ims_org_id
-  * bed_id
-  * staffed_beds
-* business_table contains information about the hospitals
-  * ims_org_id
-  * business_name
-* We use ims_org_id as the condition for the inner join to find what hospitals contain ICU and SICU beds
+-   bed_fact_table contains information about the hospital beds:
+    -   ims_org_id
+    -   bed_id
+    -   staffed_beds
+-   business_table contains information about the hospitals
+    -   ims_org_id
+    -   business_name
+-   We use ims_org_id as the condition for the inner join to find what hospitals contain ICU and SICU beds
 
 ### Interpretation of Findings (Pt. 1)
-
 
 ### Follow-up Analysis for Leadership (identifying hospitals with both ICU and SICU volume sufficiency)
 
