@@ -38,44 +38,6 @@ summary(bed_fact_df)
 print("Summary of business.csv")
 summary(business_df)
 
-# Outlier identification
-# Compute outliers for each bed type in business_df
-business_outliers <- business_df %>%
-  mutate(
-    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
-    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
-    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
-    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
-    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
-    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
-  ) %>%
-  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
-  filter(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds) %>%
-  filter(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds) %>%
-  filter(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds) %>%
-  select(ttl_license_beds, ttl_census_beds, ttl_staffed_beds)
-
-business_outliers
-
-# Remove outliers from dataset
-rmv_business_outliers <- business_df %>%
-  mutate(
-    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
-    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
-    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
-    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
-    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
-    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
-  ) %>%
-  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
-  filter(!(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds)) %>%
-  filter(!(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds)) %>%
-  filter(!(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds))
-
-# Note subtracted outliers from new dataframe
-str(business_df)
-str(rmv_business_outliers)
-
 # Basic histograms for outlier visualization
 ggplot(bed_fact_df, aes(x = license_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
@@ -97,12 +59,6 @@ ggplot(bed_fact_df, aes(x = staffed_beds)) +
   scale_y_continuous(limits = c(-1, 3000)) +
   labs(title = "Data Distribution - bed_fact.csv", x = "# of Staffed Beds", y = "Frequency") +
   theme_minimal()
-
-```
-
-```{r, tidy}
-
-# Tidy data if necessary
 
 ```
 
@@ -166,7 +122,7 @@ dbWriteTable(p2_connection, "business_table", business_df, overwrite = TRUE, row
 
 ```
 
--   bed_fact_table, bed_type_table, and business_table are loaded from their corresponding R dataframes
+* bed_fact_table, bed_type_table, and business_table are loaded from their corresponding R dataframes
 
 ```{r, combined_table}
 # Create combined_table, if it doesn't already exist
@@ -216,7 +172,30 @@ str(combined_df)
 
 ```
 
--   combined_table is loaded from the existing db tables and then loaded into combined_df
+* combined_table is loaded from the existing db tables and then loaded into combined_df
+
+```{r, tidy}
+
+# Outlier identification
+# Compute outliers for each bed type in combined_df
+bed_type_outliers <- combined_df %>%
+  mutate(
+    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
+    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
+    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
+    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
+    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
+    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
+  ) %>%
+  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
+  filter(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds) %>%
+  filter(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds) %>%
+  filter(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds) %>%
+  select(ttl_license_beds, ttl_census_beds, ttl_staffed_beds)
+
+bed_type_outliers
+
+```
 
 ```{r, check_composite_pks}
 
@@ -321,32 +300,57 @@ license_beds_SICU_df <- dbGetQuery(p2_connection, license_beds_SICU)
 ```
 
 ```{r, staffed_beds_separate}
-staffed_beds_separate <- "SELECT business_name AS hospital_name,
+get_staffed_beds_total <- "SELECT business_name AS hospital_name,
                                  --- Take the sum of the staffed beds in a new column total_icu_sicu_staffed_beds ---
                                  SUM(staffed_beds) AS total_icu_sicu_staffed_beds
                           FROM combined_table
                           --- Only include rows where bed_id is 4 (ICU) or 15 (SICU) ---
                           WHERE bed_id IN (4, 15)
                           --- Group by hospital_name ---
-                          GROUP BY business_name
+                          GROUP BY hospital_name
                           --- Arrange in descending order ---
                           ORDER BY total_icu_sicu_staffed_beds DESC
                           --- Only include top 10 hospitals ---
                           LIMIT 10;"
 
-total_staffed_beds <- dbGetQuery(p2_connection, staffed_beds_separate) %>%
-  as_tibble()
+total_staffed_beds <- dbGetQuery(p2_connection, get_staffed_beds_total) %>%
+  as_tibble() %>%
+  mutate(
+    total_icu_sicu_staffed_beds = as.numeric(total_icu_sicu_staffed_beds)
+  )
 total_staffed_beds
-
 ```
 
 ```{r}
-ggplot(total_staffed_beds, aes(reorder(hospital_name, -total_icu_sicu_staffed_beds), total_icu_sicu_staffed_beds, fill = hospital_name)) +
+get_staffed_beds_separate <- "SELECT business_name AS hospital_name,
+                                 SUM(CASE WHEN bed_desc = 'ICU' THEN staffed_beds ELSE 0 END) AS ICU_beds,
+                                 SUM(CASE WHEN bed_desc = 'SICU' THEN staffed_beds ELSE 0 END) AS SICU_beds,
+                                 SUM(staffed_beds) AS total_icu_sicu_staffed_beds
+                          FROM combined_table
+                          --- Only include rows where bed_id is 4 (ICU) or 15 (SICU) ---
+                          WHERE bed_desc IN ('ICU', 'SICU')
+                          GROUP BY hospital_name
+                          --- Arrange in descending order ---
+                          ORDER BY total_icu_sicu_staffed_beds DESC;"
+
+separate_staffed_beds_df <- dbGetQuery(p2_connection, get_staffed_beds_separate) %>%
+  as_tibble() %>%
+  slice(1:10)
+separate_staffed_beds_df
+
+pivot_staffed_beds_df <- separate_staffed_beds_df %>%
+  pivot_longer(cols = c(ICU_beds, SICU_beds), names_to = "bed_type", values_to = "bed_count")
+
+```
+
+```{r staffed visual}
+## Rough draft visual ##
+ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
   labs(
   x = "Hospital Name",
   y = "Staffed Bed Count",
-  fill = "Hospital",
+  fill = "Bed",
   title = "Hospitals with the highest combined ICU and SICU staffed bed counts"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
