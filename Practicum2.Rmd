@@ -321,8 +321,10 @@ total_staffed_beds <- dbGetQuery(p2_connection, get_staffed_beds_total) %>%
 total_staffed_beds
 ```
 
-```{r}
-get_staffed_beds_separate <- "SELECT business_name AS hospital_name,
+```{r staffed visual}
+
+# Query for the visual
+staffed_beds_separate_visual <- "SELECT business_name AS hospital_name,
                                  SUM(CASE WHEN bed_desc = 'ICU' THEN staffed_beds ELSE 0 END) AS ICU_beds,
                                  SUM(CASE WHEN bed_desc = 'SICU' THEN staffed_beds ELSE 0 END) AS SICU_beds,
                                  SUM(staffed_beds) AS total_icu_sicu_staffed_beds
@@ -333,18 +335,20 @@ get_staffed_beds_separate <- "SELECT business_name AS hospital_name,
                           --- Arrange in descending order ---
                           ORDER BY total_icu_sicu_staffed_beds DESC;"
 
-separate_staffed_beds_df <- dbGetQuery(p2_connection, get_staffed_beds_separate) %>%
+# Create new dataframe for visual
+separate_staffed_beds_df <- dbGetQuery(p2_connection, staffed_beds_separate_visual) %>%
   as_tibble() %>%
-  slice(1:10)
+  slice(1:10) %>%
+  rename(ICU = ICU_beds,
+         SICU = SICU_beds)
 separate_staffed_beds_df
 
 pivot_staffed_beds_df <- separate_staffed_beds_df %>%
-  pivot_longer(cols = c(ICU_beds, SICU_beds), names_to = "bed_type", values_to = "bed_count")
-
+  pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
 ```
 
-```{r staffed visual}
-## Rough draft visual ##
+``` {r}
+# Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
 ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
   labs(
@@ -354,15 +358,15 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   title = "Hospitals with the highest combined ICU and SICU staffed bed counts"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
   theme_classic() +
   theme(
-  axis.text.x = element_blank(),
+  axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
   axis.title.x = element_blank(),
   axis.ticks.x = element_blank(),
-  legend.title = element_text(face = "bold", size = 10),
-  legend.text = element_text(size = 9),
+  legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
-  axis.title = element_text(face = "bold"),
+  axis.title.y = element_text(color = "black"),
   plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
   plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
   )
@@ -397,6 +401,57 @@ staffed_beds_combined <- "SELECT business_name AS hospital_name,
 
 total_staffed_beds <- dbGetQuery(p2_connection, staffed_beds_combined)
 total_staffed_beds
+```
+
+```{r}
+staffed_beds_combined_visual <- "SELECT business_name AS hospital_name,
+                                 SUM(CASE WHEN bed_id = 4 THEN staffed_beds ELSE 0 END) AS ICU_beds,
+                                 SUM(CASE WHEN bed_id = 15 THEN staffed_beds ELSE 0 END) AS SICU_beds,
+                                 SUM(staffed_beds) AS total_icu_sicu_beds
+                          FROM combined_table
+                          --- Include ICU and SICU ---
+                          WHERE (bed_id = 4 OR bed_id = 15)
+                          GROUP BY hospital_name
+                          --- Ensures at least 1 bed is counted in SICU and ICU ---
+                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                          ORDER BY total_icu_sicu_beds DESC;"
+
+staffed_beds_combined_visual_df <- dbGetQuery(p2_connection, staffed_beds_combined_visual) %>%
+  as_tibble %>%
+  slice(1:10) %>%
+  rename(ICU = ICU_beds,
+         SICU = SICU_beds)
+
+staffed_beds_combined_visual_df
+
+pivot_combined_staffed_beds_visual_df <- staffed_beds_combined_visual_df %>%
+  pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
+```
+
+```{r}
+# Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
+ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
+  geom_bar(stat = "identity") +
+  labs(
+  x = "Hospital Name",
+  y = "Staffed Bed Count",
+  fill = "Bed",
+  title = "Hospitals with the highest counts of at least 1 ICU and SICU staffed beds"
+  ) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
+  axis.title.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black"),
+  plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
+  )
 ```
 
 ### Interpretation of Findings (Pt. 2)
