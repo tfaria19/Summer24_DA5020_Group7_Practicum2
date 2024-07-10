@@ -379,8 +379,20 @@ ggplot(total_staffed_beds, aes(reorder(hospital_name, -total_icu_sicu_staffed_be
 ```
 
 ```{r, staffed_beds_combined}
-# Caitlin
+staffed_beds_combined <- "SELECT business_name AS hospital_name,
+                                 SUM(staffed_beds) AS total_icu_sicu_beds
+                          FROM combined_table
+                          --- Include ICU and SICU ---
+                          WHERE (bed_id = 4 OR bed_id = 15)
+                          GROUP BY hospital_name
+                          --- Ensures at least 1 bed is counted in SICU and ICU ---
+                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                          ORDER BY total_icu_sicu_beds DESC
+                          LIMIT 10;"
 
+total_staffed_beds <- dbGetQuery(p2_connection, staffed_beds_combined)
+total_staffed_beds
 ```
 
 ### Interpretation of Findings (Pt. 2)
