@@ -3,8 +3,8 @@ title: "Practicum2"
 author: "Thomas Faria, Caitlin Kirkpatrick, Sairah Shir"
 date: "2024-07-14"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -31,11 +31,12 @@ business_df <- read_csv("data/business.csv", show_col_types = FALSE)
 ```{r, explore}
 
 # Explore data
-print("Summary of bed_type.csv")
+
+# Summary of bed_type_df
 summary(bed_type_df)
-print("Summary of bed_fact.csv")
+# Summary of bed_fact_df
 summary(bed_fact_df)
-print("Summary of business.csv")
+# Summary of business_df
 summary(business_df)
 
 # Basic histograms for outlier visualization
@@ -43,21 +44,21 @@ ggplot(bed_fact_df, aes(x = license_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
   scale_x_continuous(limits = c(-1, 3000)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv", x = "# of License Beds", y = "Frequency") +
+  labs(title = "Data Distribution - bed_fact.csv - License", x = "# of License Beds", y = "Frequency") +
   theme_minimal()
 
 ggplot(bed_fact_df, aes(x = census_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
   scale_x_continuous(limits = c(-1, 3000)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv", x = "# of Census Beds", y = "Frequency") +
+  labs(title = "Data Distribution - bed_fact.csv - Census", x = "# of Census Beds", y = "Frequency") +
   theme_minimal()
 
 ggplot(bed_fact_df, aes(x = staffed_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
   scale_x_continuous(limits = c(-1, 3000)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv", x = "# of Staffed Beds", y = "Frequency") +
+  labs(title = "Data Distribution - bed_fact.csv - Staffed", x = "# of Staffed Beds", y = "Frequency") +
   theme_minimal()
 
 ```
@@ -181,8 +182,7 @@ head(combined_df)
 
 ```{r, outlier_id}
 
-# Outlier identification
-# Compute outliers for each bed type in combined_df
+# Compute outliers for each bed type in the combined_df
 bed_type_outliers <- combined_df %>%
   mutate(
     mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
@@ -239,11 +239,6 @@ if (nrow(duplicate_keys) == 0) {
 ```
 
 ### Identification of Facts/Dimensions in bed_type.csv and business.csv
-
-```{r}
-str(bed_type_df)
-str(business_df)
-```
 
 #### Dimensions
 
@@ -555,20 +550,18 @@ ggplot(pivot_combined_census_beds_df, aes(x = reorder(hospital_name, -bed_count)
 #### Staffed Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
 ```{r, staffed_beds_combined}
-staffed_beds_combined <- "SELECT business_name AS hospital_name,
-                                 SUM(staffed_beds) AS total_icu_sicu_beds
-                          FROM combined_table
-                          --- Include ICU and SICU ---
-                          WHERE (bed_id = 4 OR bed_id = 15)
-                          GROUP BY hospital_name
-                          --- Ensures at least 1 bed is counted in SICU and ICU ---
-                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
-                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
-                          ORDER BY total_icu_sicu_beds DESC
-                          LIMIT 10;"
+staffed_beds_combined <- "SELECT business_name AS hospital_name, 
+SUM(census_beds) AS total_staffed_beds_combined
+FROM combined_table
+WHERE (bed_id = 4 OR bed_id = 15)
+GROUP BY hospital_name
+HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+ORDER BY total_staffed_beds_combined DESC
+LIMIT 10;"
 
-total_staffed_beds <- dbGetQuery(p2_connection, staffed_beds_combined)
-total_staffed_beds
+staffed_beds_combined_df <- dbGetQuery(p2_connection, staffed_beds_combined)
+staffed_beds_combined_df
 ```
 
 ```{r}
