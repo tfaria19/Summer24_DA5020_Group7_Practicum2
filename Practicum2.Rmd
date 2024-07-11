@@ -38,44 +38,6 @@ summary(bed_fact_df)
 print("Summary of business.csv")
 summary(business_df)
 
-# Outlier identification
-# Compute outliers for each bed type in business_df
-business_outliers <- business_df %>%
-  mutate(
-    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
-    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
-    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
-    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
-    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
-    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
-  ) %>%
-  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
-  filter(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds) %>%
-  filter(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds) %>%
-  filter(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds) %>%
-  select(ttl_license_beds, ttl_census_beds, ttl_staffed_beds)
-
-business_outliers
-
-# Remove outliers from dataset
-rmv_business_outliers <- business_df %>%
-  mutate(
-    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
-    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
-    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
-    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
-    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
-    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
-  ) %>%
-  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
-  filter(!(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds)) %>%
-  filter(!(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds)) %>%
-  filter(!(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds))
-
-# Note subtracted outliers from new dataframe
-str(business_df)
-str(rmv_business_outliers)
-
 # Basic histograms for outlier visualization
 ggplot(bed_fact_df, aes(x = license_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
@@ -100,12 +62,6 @@ ggplot(bed_fact_df, aes(x = staffed_beds)) +
 
 ```
 
-```{r, tidy}
-
-# Tidy data if necessary
-
-```
-
 ```{r, create_db}
 
 # Add data to a new database for downstream SQL queries
@@ -122,41 +78,41 @@ table_exists <- function(con, table_name) {
 # Create bed_type_table, if it doesn't already exist
 if (!table_exists(p2_connection, "bed_type_table")) {
   dbExecute(p2_connection, "
-                      CREATE TABLE bed_type_table (
-                        bed_id INTEGER PRIMARY KEY,
-                        bed_code TEXT,
-                        bed_desc TEXT
-                      )
-          ")
+    CREATE TABLE bed_type_table (
+      bed_id INTEGER PRIMARY KEY,
+      bed_code TEXT,
+      bed_desc TEXT
+    );
+  ")
 }
 
 # Create bed_fact_table, if it doesn't already exist
 if (!table_exists(p2_connection, "bed_fact_table")) {
   dbExecute(p2_connection, "
-                      CREATE TABLE bed_fact_table (
-                        ims_org_id TEXT,
-                        bed_id INTEGER,
-                        license_beds INTEGER,
-                        census_beds INTEGER,
-                        staffed_beds INTEGER,
-                        PRIMARY KEY (ims_org_id, bed_id)
-                      )
-          ")
+    CREATE TABLE bed_fact_table (
+      ims_org_id TEXT,
+      bed_id INTEGER,
+      license_beds INTEGER,
+      census_beds INTEGER,
+      staffed_beds INTEGER,
+      PRIMARY KEY (ims_org_id, bed_id)
+    );
+  ")
 }
 
 # Create business_table, if it doesn't already exist
 if (!table_exists(p2_connection, "business_table")) {
   dbExecute(p2_connection, "
-                      CREATE TABLE business_table (
-                        ims_org_id TEXT,
-                        business_name TEXT,
-                        ttl_license_beds INTEGER,
-                        ttl_census_beds INTEGER,
-                        ttl_staffed_beds INTEGER,
-                        bed_cluster_id INTEGER,
-                        PRIMARY KEY (ims_org_id, bed_cluster_id)
-                      )
-          ")
+    CREATE TABLE business_table (
+      ims_org_id TEXT,
+      business_name TEXT,
+      ttl_license_beds INTEGER,
+      ttl_census_beds INTEGER,
+      ttl_staffed_beds INTEGER,
+      bed_cluster_id INTEGER,
+      PRIMARY KEY (ims_org_id, bed_cluster_id)
+    );
+  ")
 }
 
 # Load data into each table
@@ -166,11 +122,86 @@ dbWriteTable(p2_connection, "business_table", business_df, overwrite = TRUE, row
 
 ```
 
+* bed_fact_table, bed_type_table, and business_table are loaded from their corresponding R dataframes
+
+```{r, combined_table}
+# Create combined_table, if it doesn't already exist
+if (!table_exists(p2_connection, "combined_table")) {
+  dbExecute(p2_connection, "
+    CREATE TABLE combined_table (
+      ims_org_id TEXT,
+      business_name TEXT,
+      ttl_license_beds INTEGER,
+      ttl_census_beds INTEGER,
+      ttl_staffed_beds INTEGER,
+      bed_cluster_id INTEGER,
+      bed_id INTEGER,
+      license_beds INTEGER,
+      census_beds INTEGER,
+      staffed_beds INTEGER,
+      bed_code TEXT,
+      bed_desc TEXT,
+      PRIMARY KEY (ims_org_id, bed_id)
+    );
+  ")
+  # Insert data from other db tables
+  dbExecute(p2_connection, "
+    INSERT INTO combined_table
+    SELECT business_table.ims_org_id,
+           business_table.business_name,
+           business_table.ttl_license_beds,
+           business_table.ttl_census_beds,
+           business_table.ttl_staffed_beds,
+           business_table.bed_cluster_id,
+           bed_fact_table.bed_id,
+           bed_fact_table.license_beds,
+           bed_fact_table.census_beds,
+           bed_fact_table.staffed_beds,
+           bed_type_table.bed_code,
+           bed_type_table.bed_desc
+    FROM business_table
+    JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
+    JOIN bed_type_table ON bed_fact_table.bed_id = bed_type_table.bed_id;
+  ")
+}
+
+# Create combined dataframe
+combined_df <- dbGetQuery(p2_connection, "SELECT * FROM combined_table")
+head(combined_df)
+str(combined_df)
+
+```
+
+* combined_table is loaded from the existing db tables and then loaded into combined_df
+
+```{r, tidy}
+
+# Outlier identification
+# Compute outliers for each bed type in combined_df
+bed_type_outliers <- combined_df %>%
+  mutate(
+    mean_license_beds = mean(ttl_license_beds, na.rm = TRUE),
+    mean_census_beds = mean(ttl_census_beds, na.rm = TRUE),
+    mean_staffed_beds = mean(ttl_staffed_beds, na.rm = TRUE),
+    sd_license_beds = sd(ttl_license_beds, na.rm = TRUE),
+    sd_census_beds = sd(ttl_census_beds, na.rm = TRUE),
+    sd_staffed_beds = sd(ttl_staffed_beds, na.rm = TRUE)
+  ) %>%
+  # Relative to the mean, any values on the lower or upper bounds that are 3 times the standard deviation are filtered
+  filter(ttl_license_beds < mean_license_beds - 3 * sd_license_beds | ttl_license_beds > mean_license_beds + 3 * sd_license_beds) %>%
+  filter(ttl_census_beds < mean_census_beds - 3 * sd_census_beds | ttl_census_beds > mean_census_beds + 3 * sd_census_beds) %>%
+  filter(ttl_staffed_beds < mean_staffed_beds - 3 * sd_staffed_beds | ttl_staffed_beds > mean_staffed_beds + 3 * sd_staffed_beds) %>%
+  select(ttl_license_beds, ttl_census_beds, ttl_staffed_beds)
+
+bed_type_outliers
+
+```
+
 ```{r, check_composite_pks}
 
 # Verify the uniqueness of the composite primary keys used in bed_fact_table (combination of ims_org_id and bed_id) and business_table (combination of ims_org_id and bed_cluster_id)
 
-duplicate_keys <- dbGetQuery(connection, "
+duplicate_keys <- dbGetQuery(p2_connection, "
                              SELECT ims_org_id, bed_id, COUNT(*)
                              FROM bed_fact_table
                              GROUP BY ims_org_id, bed_id
@@ -184,7 +215,7 @@ if (nrow(duplicate_keys) == 0) {
   print(duplicate_keys)
 }
 
-duplicate_keys <- dbGetQuery(connection, "
+duplicate_keys <- dbGetQuery(p2_connection, "
                              SELECT ims_org_id, bed_cluster_id, COUNT(*)
                              FROM business_table
                              GROUP BY ims_org_id, bed_cluster_id
@@ -200,36 +231,67 @@ if (nrow(duplicate_keys) == 0) {
 
 ```
 
-###  Identification of Dimensions in bed_type.csv and business.csv
+### Identification of Dimensions in bed_type.csv and business.csv
 
 ```{r}
 str(bed_type_df)
 str(business_df)
 ```
 
-* bed_type_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
-  * bed_id (primary key) assigns a unique identifier for each type of bed
-  * bed_code contains abbreviations for each type of bed
-  * bed_desc contains descriptions of each type of bed
-
-* business_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
-  * ims_org_id (primary key) assigns a unique identifier for each business
-  * business_name contains the names of the organizations
-  * bed_cluster_id categorizes bed clusters from 1-9
-* The remaining columns ttl_license_beds, ttl_census_beds, and ttl_staffed_beds are facts due to their quantitative nature 
+-   bed_type_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
+    -   bed_id (primary key) assigns a unique identifier for each type of bed
+    -   bed_code contains abbreviations for each type of bed
+    -   bed_desc contains descriptions of each type of bed
+-   business_df contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
+    -   ims_org_id (primary key) assigns a unique identifier for each business
+    -   business_name contains the names of the organizations
+    -   bed_cluster_id categorizes bed clusters from 1-9
+-   The remaining columns ttl_license_beds, ttl_census_beds, and ttl_staffed_beds are facts due to their quantitative nature
 
 ### Identification of Fact Variables in bed_fact.csv
 
-* bed_fact_df has one dimension that is qualitative nature:
-  * ims_org_id (primary key) is a dimension as it assigns unique identifier for each business  
-* bed_fact_df has for facts: 
-  * Bed_id, license_bed, census_bed, staffed_bed are all facts due to the numerical data  
+-   bed_fact_df has one dimension that is qualitative nature:
+    -   ims_org_id (primary key) is a dimension as it assigns unique identifier for each business\
+-   bed_fact_df has for facts:
+    -   Bed_id, license_bed, census_bed, staffed_bed are all facts due to the numerical data
 
 ### Initial Analysis for Leadership
 
 ```{r, license_beds_separate}
-# Thomas
 
+license_beds_ICU <- "SELECT business_table.business_name AS hospital_name,
+--- Take the sum of the license beds in a new column total_icu_license_beds ---
+SUM(bed_fact_table.license_beds) AS total_icu_license_beds
+FROM business_table
+--- Inner join bed_fact_table with business_table on ims_org_id ---
+JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
+--- Only include rows where bed_id is 4 (ICU) ---
+WHERE bed_fact_table.bed_id = 4
+--- Group by hospital_name ---
+GROUP BY business_table.business_name
+--- Arrange in descending order ---
+ORDER BY total_icu_license_beds DESC
+--- Only include top 10 hospitals ---
+LIMIT 10;"
+
+license_beds_ICU_df <- dbGetQuery(p2_connection, license_beds_ICU)
+
+license_beds_SICU <- "SELECT business_table.business_name AS hospital_name,
+--- Take the sum of the license beds in a new column total_sicu_license_beds ---
+SUM(bed_fact_table.license_beds) AS total_sicu_license_beds
+FROM business_table
+--- Inner join bed_fact_table with business_table on ims_org_id ---
+JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
+--- Only include rows where bed_id is 15 (SICU) ---
+WHERE bed_fact_table.bed_id = 15
+--- Group by hospital_name ---
+GROUP BY business_table.business_name
+--- Arrange in descending order ---
+ORDER BY total_sicu_license_beds DESC
+--- Only include top 10 hospitals ---
+LIMIT 10;"
+
+license_beds_SICU_df <- dbGetQuery(p2_connection, license_beds_SICU)
 ```
 
 ```{r, census_beds_separate}
@@ -253,36 +315,79 @@ ggplot(census_beds_separate, aes(x = hospital_name, y = total_icu_sicu_census_be
 ```
 
 ```{r, staffed_beds_separate}
-staffed_beds_separate <- "SELECT business_table.business_name AS hospital_name,
+get_staffed_beds_total <- "SELECT business_name AS hospital_name,
                                  --- Take the sum of the staffed beds in a new column total_icu_sicu_staffed_beds ---
-                                 SUM(bed_fact_table.staffed_beds) AS total_icu_sicu_staffed_beds
-                          FROM business_table
-                          --- Inner join bed_fact_table with business_table on ims_org_id ---
-                          JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
+                                 SUM(staffed_beds) AS total_icu_sicu_staffed_beds
+                          FROM combined_table
                           --- Only include rows where bed_id is 4 (ICU) or 15 (SICU) ---
-                          WHERE bed_fact_table.bed_id IN (4, 15)
+                          WHERE bed_id IN (4, 15)
                           --- Group by hospital_name ---
-                          GROUP BY business_table.business_name
+                          GROUP BY hospital_name
                           --- Arrange in descending order ---
                           ORDER BY total_icu_sicu_staffed_beds DESC
                           --- Only include top 10 hospitals ---
                           LIMIT 10;"
 
-dbGetQuery(p2_connection, staffed_beds_separate)
+total_staffed_beds <- dbGetQuery(p2_connection, get_staffed_beds_total) %>%
+  as_tibble() %>%
+  mutate(
+    total_icu_sicu_staffed_beds = as.numeric(total_icu_sicu_staffed_beds)
+  )
+total_staffed_beds
 ```
 
-* bed_fact_table contains information about the hospital beds:
-  * ims_org_id
-  * bed_id
-  * staffed_beds
-* business_table contains information about the hospitals
-  * ims_org_id
-  * business_name
-* We use ims_org_id as the condition for the inner join to find what hospitals contain ICU and SICU beds
+```{r staffed visual}
+
+# Query for the visual
+staffed_beds_separate_visual <- "SELECT business_name AS hospital_name,
+                                 SUM(CASE WHEN bed_desc = 'ICU' THEN staffed_beds ELSE 0 END) AS ICU_beds,
+                                 SUM(CASE WHEN bed_desc = 'SICU' THEN staffed_beds ELSE 0 END) AS SICU_beds,
+                                 SUM(staffed_beds) AS total_icu_sicu_staffed_beds
+                          FROM combined_table
+                          --- Only include rows where bed_id is 4 (ICU) or 15 (SICU) ---
+                          WHERE bed_desc IN ('ICU', 'SICU')
+                          GROUP BY hospital_name
+                          --- Arrange in descending order ---
+                          ORDER BY total_icu_sicu_staffed_beds DESC;"
+
+# Create new dataframe for visual
+separate_staffed_beds_df <- dbGetQuery(p2_connection, staffed_beds_separate_visual) %>%
+  as_tibble() %>%
+  slice(1:10) %>%
+  rename(ICU = ICU_beds,
+         SICU = SICU_beds)
+separate_staffed_beds_df
+
+pivot_staffed_beds_df <- separate_staffed_beds_df %>%
+  pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
+```
+
+``` {r}
+# Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
+ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
+  geom_bar(stat = "identity") +
+  labs(
+  x = "Hospital Name",
+  y = "Staffed Bed Count",
+  fill = "Bed",
+  title = "Hospitals with the highest combined ICU and SICU staffed bed counts"
+  ) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
+  axis.title.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black"),
+  plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
+  )
+```
 
 ### Interpretation of Findings (Pt. 1)
-
-TODO
 
 ### Follow-up Analysis for Leadership (identifying hospitals with both ICU and SICU volume sufficiency)
 
@@ -297,8 +402,71 @@ TODO
 ```
 
 ```{r, staffed_beds_combined}
-# Caitlin
+staffed_beds_combined <- "SELECT business_name AS hospital_name,
+                                 SUM(staffed_beds) AS total_icu_sicu_beds
+                          FROM combined_table
+                          --- Include ICU and SICU ---
+                          WHERE (bed_id = 4 OR bed_id = 15)
+                          GROUP BY hospital_name
+                          --- Ensures at least 1 bed is counted in SICU and ICU ---
+                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                          ORDER BY total_icu_sicu_beds DESC
+                          LIMIT 10;"
 
+total_staffed_beds <- dbGetQuery(p2_connection, staffed_beds_combined)
+total_staffed_beds
+```
+
+```{r}
+staffed_beds_combined_visual <- "SELECT business_name AS hospital_name,
+                                 SUM(CASE WHEN bed_id = 4 THEN staffed_beds ELSE 0 END) AS ICU_beds,
+                                 SUM(CASE WHEN bed_id = 15 THEN staffed_beds ELSE 0 END) AS SICU_beds,
+                                 SUM(staffed_beds) AS total_icu_sicu_beds
+                          FROM combined_table
+                          --- Include ICU and SICU ---
+                          WHERE (bed_id = 4 OR bed_id = 15)
+                          GROUP BY hospital_name
+                          --- Ensures at least 1 bed is counted in SICU and ICU ---
+                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                          ORDER BY total_icu_sicu_beds DESC;"
+
+staffed_beds_combined_visual_df <- dbGetQuery(p2_connection, staffed_beds_combined_visual) %>%
+  as_tibble %>%
+  slice(1:10) %>%
+  rename(ICU = ICU_beds,
+         SICU = SICU_beds)
+
+staffed_beds_combined_visual_df
+
+pivot_combined_staffed_beds_visual_df <- staffed_beds_combined_visual_df %>%
+  pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
+```
+
+```{r}
+# Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
+ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
+  geom_bar(stat = "identity") +
+  labs(
+  x = "Hospital Name",
+  y = "Staffed Bed Count",
+  fill = "Bed",
+  title = "Hospitals with the highest counts of at least 1 ICU and SICU staffed beds"
+  ) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
+  axis.title.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black"),
+  plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
+  )
 ```
 
 ### Interpretation of Findings (Pt. 2)
