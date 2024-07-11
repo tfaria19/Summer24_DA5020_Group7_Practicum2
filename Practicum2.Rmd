@@ -576,7 +576,7 @@ ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_co
   x = "Hospital Name",
   y = "Staffed Bed Count",
   fill = "Bed",
-  title = "Hospitals with the highest counts of at least 1 ICU and SICU staffed beds"
+  title = "Hospitals with the highest counts of at least 1 ICU and SICU Census Beds"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
