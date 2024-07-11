@@ -263,7 +263,7 @@ license_beds_ICU <- "SELECT business_table.business_name AS hospital_name,
 --- Take the sum of the license beds in a new column total_icu_license_beds ---
 SUM(bed_fact_table.license_beds) AS total_icu_license_beds
 FROM business_table
---- Inner join bed_fact_table with business_table on ims_org_id ---
+--- Inner join bed_fact_table with f on ims_org_id ---
 JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id
 --- Only include rows where bed_id is 4 (ICU) ---
 WHERE bed_fact_table.bed_id = 4
@@ -296,21 +296,32 @@ license_beds_SICU_df <- dbGetQuery(p2_connection, license_beds_SICU)
 
 ```{r, census_beds_separate}
 # Sairah
-census_beds_separate <- "SELECT business_table.business_name AS hospital_name, SUM(bed_fact_table.census_beds) AS total_icu_sicu_census_beds
-FROM business_table
-JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id 
-WHERE bed_fact_table.bed_id IN (4,15)
-GROUP BY business_table.business_name
-ORDER BY total_icu_sicu_census_beds DESC
-LIMIT 10;"
 
-dbGetQuery(p2_connection, census_beds_separate)
+census_beds_icu <- "SELECT business_name AS hospital_name, SUM(census_beds) AS total_icu_beds 
+FROM combined_table
+WHERE bed_id = 4
+GROUP BY hospital_name
+ORDER BY total_icu_beds DESC
+LIMIT 10"
 
-census_beds_separate <- dbGetQuery(p2_connection, census_beds_separate)
+census_bed_icu <- dbGetQuery(p2_connection, census_beds_icu)
 
-library(ggplot2)
+print(census_bed_icu)
 
-ggplot(census_beds_separate, aes(x = hospital_name, y = total_icu_sicu_census_beds)) + geom_bar(stat = "identity", fill = "light blue") + theme_minimal() + coord_flip() + labs(x = "Hospital Name", y = "Total ICU and SICU Census Beds")
+
+```
+
+```{r}
+census_beds_sicu <- "SELECT business_name AS hospital_name, SUM(census_beds) AS total_sicu_beds 
+FROM combined_table
+WHERE bed_id = 15
+GROUP BY hospital_name
+ORDER BY total_sicu_beds DESC
+LIMIT 10"
+
+census_bed_sicu <- dbGetQuery(p2_connection, census_beds_sicu)
+
+print(census_bed_sicu)
 
 ```
 
@@ -398,6 +409,22 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
 
 ```{r, census_beds_combined}
 # Sairah
+
+icu_sicu_census_beds <- "SELECT business_table.business_name AS hospital_name, SUM(bed_fact_table.census_beds) AS total_icu_sicu_census_beds
+FROM business_table
+JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id 
+WHERE bed_fact_table.bed_id IN (4,15)
+GROUP BY business_table.business_name
+ORDER BY total_icu_sicu_census_beds DESC
+LIMIT 10;"
+
+icu_sicu_census_beds <- dbGetQuery(p2_connection, icu_sicu_census_beds)
+
+print(icu_sicu_census_beds)
+
+library(ggplot2)
+
+ggplot(icu_sicu_census_beds, aes(x = hospital_name, y = total_icu_sicu_census_beds)) + geom_bar(stat = "identity", fill = "light blue") + theme_minimal() + coord_flip() + labs(x = "Hospital Name", y = "Total ICU and SICU Census Beds") 
 
 ```
 
