@@ -453,23 +453,77 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
 ```{r, census_beds_combined}
 # Sairah
 
-icu_sicu_census_beds <- "SELECT business_table.business_name AS hospital_name, SUM(bed_fact_table.census_beds) AS total_icu_sicu_census_beds
-FROM business_table
-JOIN bed_fact_table ON business_table.ims_org_id = bed_fact_table.ims_org_id 
-WHERE bed_fact_table.bed_id IN (4,15)
-GROUP BY business_table.business_name
+total_icu_sicu_census_beds <- "SELECT business_name AS hospital_name, SUM(census_beds) AS total_icu_sicu_census_beds
+FROM combined_table
+WHERE (bed_id = 4 OR bed_id = 15)
+GROUP BY hospital_name
+HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
 ORDER BY total_icu_sicu_census_beds DESC
 LIMIT 10;"
 
-icu_sicu_census_beds <- dbGetQuery(p2_connection, icu_sicu_census_beds)
+total_icu_sicu_census_beds <- dbGetQuery(p2_connection, total_icu_sicu_census_beds)
 
-print(icu_sicu_census_beds)
+print(total_icu_sicu_census_beds)
+```
 
-library(ggplot2)
+```{r}
+census_beds_combined_visual <- "
+SELECT business_name AS hospital_name,
+SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_beds,
+SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_beds,
+SUM(census_beds) AS total_icu_sicu_beds
+FROM combined_table
+WHERE (bed_id = 4 OR bed_id = 15)
+GROUP BY hospital_name
+HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+ORDER BY total_icu_sicu_beds DESC
+LIMIT 10;"
 
-ggplot(icu_sicu_census_beds, aes(x = hospital_name, y = total_icu_sicu_census_beds)) + geom_bar(stat = "identity", fill = "light blue") + theme_minimal() + coord_flip() + labs(x = "Hospital Name", y = "Total ICU and SICU Census Beds") 
+print(census_beds_combined_visual)
+
+census_beds_combined_df <- dbGetQuery(p2_connection, census_beds_combined_visual) %>%
+  as_tibble %>%
+  slice(1:10) %>%
+  rename(ICU = ICU_beds,
+         SICU = SICU_beds)
+
+census_beds_combined_df
+
+pivot_combined_census_beds_df <- census_beds_combined_df %>%
+  pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
 
 ```
+
+```{r}
+# Bar Chart for ICU and SICU Census Beds for Top 10 Hospitals 
+
+ggplot(pivot_combined_census_beds_df, aes(x = reorder(hospital_name, -bed_count), y = bed_count, fill = bed_type)) +
+  geom_bar(stat = "identity") +
+  labs(
+    x = "Hospital Name",
+    y = "Census Bed Count",
+    fill = "Bed",
+    title = "Hospitals with the Highest Combined ICU and SICU Census Bed Counts"
+  ) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
+    axis.title.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.title = element_text(face = "bold"),
+    axis.text.y = element_text(color = "black"),
+    axis.title.y = element_text(color = "black"),
+    plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
+    plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
+  )
+
+
+```
+
 
 ```{r, staffed_beds_combined}
 staffed_beds_combined <- "SELECT business_name AS hospital_name,
