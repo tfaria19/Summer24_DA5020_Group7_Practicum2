@@ -510,7 +510,6 @@ license_beds_combined_df
 ```{r, census_beds_combined}
 # Sairah
 
-<<<<<<< HEAD
 census_beds_combined_visual <- "SELECT business_name AS hospital_name,
                                  SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_beds,
                                  SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_beds,
@@ -524,7 +523,7 @@ census_beds_combined_visual <- "SELECT business_name AS hospital_name,
                           LIMIT 10;"
 
 census_beds_combined_visual_df <- dbGetQuery(p2_connection, census_beds_combined_visual) %>%
-=======
+
 census_beds_combined <- "SELECT business_name AS hospital_name, 
 SUM(census_beds) AS total_census_beds_combined
 FROM combined_table
@@ -555,7 +554,6 @@ ORDER BY total_icu_sicu_beds DESC
 LIMIT 10;"
 
 census_beds_combined_df <- dbGetQuery(p2_connection, census_beds_combined_visual) %>%
->>>>>>> 99f06c411af86ac2ebc84e821e633b329b05e0e1
   as_tibble %>%
   slice(1:10) %>%
   rename(ICU = ICU_beds,
@@ -666,7 +664,15 @@ ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_co
 
 ### Interpretation of Findings (Pt. 2)
 
-TODO
+Leadership was interested in hospitals that had a sufficient volume of both ICU and SICU beds and in doing this analysis for all three bed types we found a few recommendations. 
+
+- License Beds 
+
+- Census Beds
+We found from 3a that Shands Hospital at University of Florida had the most census ICU and SICU beds. However, with further investigation and making sure that the hospitals had at least one of each, ICU and SICU, we find that leadership might be interested in different hospitals. Shands Hospital at the University of Florida have more than one ICU and SICU census beds. However, there is not an equal number of ICU and SICU census beds. The best hospitals for this pilot intervention program would be Cedars Sinai Health System, Jackson Memorial Hospital, and University of Maryland Medical Center. These all have roughly the same amount of ICU and SICU census beds. 
+
+- Staffed Beds 
+
 
 ### Final Recommendation
 
