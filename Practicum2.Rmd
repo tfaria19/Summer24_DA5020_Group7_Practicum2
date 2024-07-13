@@ -17,7 +17,7 @@ library(RSQLite)
 
 ```
 
-### Loading and data exploration
+## Data Loading & Exploration
 
 ```{r, load}
 
@@ -63,7 +63,7 @@ ggplot(bed_fact_df, aes(x = staffed_beds)) +
 
 ```
 
-#### Create SQL Database
+### Create SQL Database
 
 -   bed_fact_table, bed_type_table, and business_table are loaded from their corresponding R data frames into the "p2_db" database and a connection is established for later reference
 
@@ -127,7 +127,7 @@ dbWriteTable(p2_connection, "business_table", business_df, overwrite = TRUE, row
 
 ```
 
-#### Using JOIN to Create a Combined Table
+### Using JOIN to Create a Combined Table
 
 -   combined_table is created from the existing fact/dimension tables and then loaded into combined_df for downstream R analysis
 
@@ -178,7 +178,7 @@ head(combined_df)
 
 ```
 
-#### Outlier Identification
+### Outlier Identification
 
 ```{r, outlier_id}
 
@@ -199,10 +199,13 @@ bed_type_outliers <- combined_df %>%
   select(ttl_license_beds, ttl_census_beds, ttl_staffed_beds)
 
 summary(bed_type_outliers)
+bed_type_outliers
 
 ```
 
-#### Verify Composite PKs
+* Outliers exist for staffed, license, and census bed counts within the data; however, we will not be excluding outliers from this analysis as any bed count should be included in this analysis to provide an optimal recommendation for the intervention program
+
+### Verify Composite PKs
 
 ```{r, check_composite_pks}
 
@@ -238,9 +241,9 @@ if (nrow(duplicate_keys) == 0) {
 
 ```
 
-### Identification of Facts/Dimensions in bed_type.csv and business.csv
+## Identification of Facts/Dimensions in bed_type.csv and business.csv
 
-#### Dimensions
+### Dimensions
 
 -   bed_type.csv contains three dimensions that are qualitative attributes providing context for or categorizing a fact object:
     -   bed_id (primary key) assigns a unique identifier for each type of bed
@@ -251,25 +254,27 @@ if (nrow(duplicate_keys) == 0) {
     -   business_name contains the names of the organizations
     -   bed_cluster_id categorizes bed clusters from 1-9
 
-#### Facts
+### Facts
 
 -   The remaining columns in business.csv (ttl_license_beds, ttl_census_beds, and ttl_staffed_bed)s are facts due to their quantitative nature
 
-### Identification of Facts/Dimensions in bed_fact.csv
+## Identification of Facts/Dimensions in bed_fact.csv
 
-#### Dimensions
+### Dimensions
 
 -   bed_fact.csv has one dimension that is qualitative nature:
     -   ims_org_id (primary key) is a dimension as it assigns a unique identifier for each business
 
-#### Facts
+### Facts
 
 -   bed_fact.csv has four facts:
     -   bed_id, license_beds, census_beds, staffed_beds are all facts since they report quantitative data
 
-### Initial Analysis for Leadership
+---
 
-#### License Beds (ICU and SICU Separated)
+## Initial Analysis for Leadership
+
+### License Beds (ICU and SICU Separated)
 
 ```{r, license_beds_separate}
 
@@ -311,7 +316,7 @@ total_license_beds_icu_sicu <- dbGetQuery(p2_connection, total_license_beds_icu_
 print(total_license_beds_icu_sicu)
 ```
 =======
-#### Census Beds (ICU and SICU Separated)
+### Census Beds (ICU and SICU Separated)
 >>>>>>> 99f06c411af86ac2ebc84e821e633b329b05e0e1
 
 ```{r, census_beds_separate}
@@ -402,7 +407,7 @@ print(total_census_beds_icu_sicu)
 
 ```
 
-#### Staffed Beds (ICU and SICU Separated)
+### Staffed Beds (ICU and SICU Separated)
 
 ```{r, staffed_beds_separate}
 get_staffed_beds_total <- "SELECT business_name AS hospital_name,
@@ -460,35 +465,41 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   x = "Hospital Name",
   y = "Staffed Bed Count",
   fill = "Bed",
-  title = "Hospitals with the highest combined ICU and SICU staffed bed counts"
+  title = "Hospitals with the highest combined ICU and SICU staffed bed
+  counts",
+  caption = "Figure 3C: ICU and SICU staffed beds combined with no minimum required count"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
   theme_classic() +
   theme(
-  axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
-  axis.title.x = element_blank(),
-  axis.ticks.x = element_blank(),
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", margin = margin(t = 5, b = 5)),
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
-  axis.title.y = element_text(color = "black"),
-  plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
-  )
+  axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  ) +
+  coord_flip()
 ```
 
 ### Interpretation of Findings (Pt. 1)
 
-The hospitals that have the most license ICU and SICU beds are Phoenix Childrens Hospital and University of Maryland Medical Center. Based on the finding for the census beds, it looks like Shands Hospital at University of Florida and Dallas County Hospital Association have the most census beds that include ICU and SICU beds. The hospitals that have the most staffed beds are Vidant Medical Center	and
-Rady Childrens Hospital and Health Center. Some of these hospitals shows up on all three tables in the top 10 hospitals for each of the different beds. For example, Vidant Medical Center appears on all three tables and could be a good candidate for the intervention pilot program. 
+The hospitals that have the most license ICU and SICU beds are Phoenix Childrens Hospital and University of Maryland Medical Center. Based on the finding for the census beds, it appears Shands Hospital at University of Florida and Dallas County Hospital Association have the most census beds that include ICU and SICU beds.
 
-### Follow-up Analysis for Leadership (identifying hospitals with both ICU and SICU volume sufficiency)
+The hospitals that have the most staffed beds are Vidant Medical Center and Rady Childrens Hospital and Health Center. Some hospitals show up on all three tables in the top 10 hospitals for each of the different beds. For example, Vidant Medical Center appears on all three tables and could be a good candidate for the intervention pilot program. 
 
-#### License Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
+It should be noted that despite having the highest number of ICU and SICU beds amongst the staffed, census, and license beds, Vidant Medical Center and Rady Childrens Hospital and Health Center do not appear to have an even distribution of both ICU and SICU beds. 
+
+---
+
+## Follow-up Analysis for Leadership (identifying hospitals with both ICU and SICU volume sufficiency)
+
+### License Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
 ```{r, license_beds_combined}
-# Thomas
-
 license_beds_combined <- "SELECT business_name AS hospital_name, 
 SUM(license_beds) AS total_license_beds_combined
 FROM combined_table
@@ -505,11 +516,9 @@ license_beds_combined_df
 
 ```
 
-#### Census Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
+### Census Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
 ```{r, census_beds_combined}
-# Sairah
-
 census_beds_combined_visual <- "SELECT business_name AS hospital_name,
                                  SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_beds,
                                  SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_beds,
@@ -567,7 +576,6 @@ pivot_combined_census_beds_visual_df <- census_beds_combined_visual_df %>%
 
 ```{r}
 # Bar Chart for ICU and SICU Census Beds for Top 10 Hospitals 
-
 ggplot(pivot_combined_census_beds_df, aes(x = reorder(hospital_name, -bed_count), y = bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
   labs(
@@ -593,7 +601,7 @@ ggplot(pivot_combined_census_beds_df, aes(x = reorder(hospital_name, -bed_count)
 
 ```
 
-#### Staffed Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
+### Staffed Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
 ```{r, staffed_beds_combined}
 staffed_beds_combined <- "SELECT business_name AS hospital_name, 
@@ -610,7 +618,7 @@ staffed_beds_combined_df <- dbGetQuery(p2_connection, staffed_beds_combined)
 staffed_beds_combined_df
 ```
 
-```{r}
+```{r staffed_beds_combined_visual}
 staffed_beds_combined_visual <- "SELECT business_name AS hospital_name,
                                  SUM(CASE WHEN bed_id = 4 THEN staffed_beds ELSE 0 END) AS ICU_beds,
                                  SUM(CASE WHEN bed_id = 15 THEN staffed_beds ELSE 0 END) AS SICU_beds,
@@ -636,7 +644,7 @@ pivot_combined_staffed_beds_visual_df <- staffed_beds_combined_visual_df %>%
   pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
 ```
 
-```{r}
+```{r staffed_beds_combined_visual}
 # Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
 ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
@@ -644,22 +652,23 @@ ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_co
   x = "Hospital Name",
   y = "Staffed Bed Count",
   fill = "Bed",
-  title = "Hospitals with Highest Combined Total ICU and SICU Census Beds",
-  caption = "Minimum 1 ICU and SICU bed per hospital"
+  title = "Hospitals with Highest Combined Total ICU and SICU Staffed Beds",
+  caption = "Figure 4C: Minimum 1 ICU and SICU staffed bed per hospital"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
   theme_classic() +
   theme(
-  axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
-  axis.title.x = element_blank(),
-  axis.ticks.x = element_blank(),
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", margin = margin(t = 5, b = 5)),
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
-  axis.title.y = element_text(color = "black"),
-  plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
-  )
+  axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  ) +
+  coord_flip()
 ```
 
 ### Interpretation of Findings (Pt. 2)
@@ -669,11 +678,87 @@ Leadership was interested in hospitals that had a sufficient volume of both ICU 
 - License Beds 
 
 - Census Beds
+
 We found from 3a that Shands Hospital at University of Florida had the most census ICU and SICU beds. However, with further investigation and making sure that the hospitals had at least one of each, ICU and SICU, we find that leadership might be interested in different hospitals. Shands Hospital at the University of Florida have more than one ICU and SICU census beds. However, there is not an equal number of ICU and SICU census beds. The best hospitals for this pilot intervention program would be Cedars Sinai Health System, Jackson Memorial Hospital, and University of Maryland Medical Center. These all have roughly the same amount of ICU and SICU census beds. 
 
-- Staffed Beds 
+- Staffed Beds
+
+With the added condition that hospitals must have at least 1 ICU and SICU bed type, the resulting top 10 hospitals are quite different. 5 hospitals have been displaced that were previously shown in Figure 3C, the most notable being Vidant Medical Center and Ray Childrens Hospital and Health Center. Despite having a high count of ICU beds, neither had any SICU beds. In Figure 4C we can see the distribution of ICU and SICU staffed beds across the hospitals.
+
+The University of Maryland Medical Center has an even distribution of ICU and SICU staffed beds. This is advantageous for cost-efficiency to ensure neither ICU or SICU beds counts are too low when rolling out the intervention program. Shands Hospital at the University of Florida has significantly more SICU beds than ICU beds, so despite having the second highest bed count, the need for a relatively even spread of ICU and SICU beds makes it difficult to recommend. 
+
+---
+
+## Final Recommendation
 
 
-### Final Recommendation
+```{r}
+### Rough draft query to use for final recommendation ###
+all_beds_combined_visual <- "SELECT business_name AS hospital_name,
+                                 SUM(CASE WHEN bed_id = 4 THEN license_beds ELSE 0 END) AS ICU_license_beds,
+                                 SUM(CASE WHEN bed_id = 15 THEN license_beds ELSE 0 END) AS SICU_license_beds,
+                                 SUM(license_beds) AS total_license_icu_sicu_beds,
+                                 SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_census_beds,
+                                 SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_census_beds,
+                                 SUM(census_beds) AS total_census_icu_sicu_beds,
+                                 SUM(CASE WHEN bed_id = 4 THEN staffed_beds ELSE 0 END) AS ICU_staffed_beds,
+                                 SUM(CASE WHEN bed_id = 15 THEN staffed_beds ELSE 0 END) AS SICU_staffed_beds,
+                                 SUM(staffed_beds) AS total_staffed_icu_sicu_beds
+                          FROM combined_table
+                          --- Include ICU and SICU ---
+                          WHERE (bed_id = 4 OR bed_id = 15)
+                          GROUP BY hospital_name
+                          --- Ensures at least 1 bed is counted in SICU and ICU ---
+                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                          ORDER BY total_license_icu_sicu_beds + total_census_icu_sicu_beds + total_staffed_icu_sicu_beds DESC;"
 
-TODO
+all_beds_combined_visual_df <- dbGetQuery(p2_connection, all_beds_combined_visual) %>%
+  as_tibble %>%
+  slice(1:10) %>%
+  rename("Census ICU" = ICU_census_beds,
+         "Census SICU" = SICU_census_beds,
+         "License ICU" = ICU_license_beds,
+         "License SICU" = SICU_license_beds,
+         "Staffed ICU" = ICU_staffed_beds,
+         "Staffed SICU" = SICU_staffed_beds)
+
+all_beds_combined_visual_df
+
+pivot_all_beds_visual_df <- all_beds_combined_visual_df %>%
+  pivot_longer(
+    cols = starts_with("License") | starts_with("Census") | starts_with("Staffed"),
+    names_to = c("bed_type", "icu_sicu"),
+    names_sep = " ",
+    values_to = "bed_count"
+  ) %>%
+  mutate(
+    bed_type = factor(bed_type, levels = c("License", "Census", "Staffed")),
+    icu_sicu = factor(icu_sicu, levels = c("ICU", "SICU"))
+  )
+```
+
+```{r all beds visual}
+### Rough draft visual to use for final recommendation ###
+ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = interaction(bed_type, icu_sicu))) +
+  geom_bar(stat = "identity", position = "stack") +
+  facet_wrap(~ icu_sicu, ncol = 1, scales = "free_x") +
+  labs(
+    x = "Hospital Name",
+    y = "Bed Count",
+    fill = "Bed Type",
+    title = "Bed Counts by Hospital and Bed Type (ICU and SICU)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  ) +
+  coord_flip()
+```
+
+*** Draft ***
+To maintain cost efficiency when implementing a hiring intervention we analyzed the volume of ICU and SICU beds across three bed types: license, census, and staffed beds. We derived the top 10 hospitals with sufficient volume for either SICU or ICU beds and the top 10 hospitals with at least 1 of both types. 
+
+We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types. To visualize the distribution of beds  
+
