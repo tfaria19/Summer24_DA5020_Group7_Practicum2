@@ -315,8 +315,6 @@ total_license_beds_icu_sicu <- dbGetQuery(p2_connection, total_license_beds_icu_
 
 print(total_license_beds_icu_sicu)
 ```
-=======
-### Census Beds (ICU and SICU Separated)
 >>>>>>> 99f06c411af86ac2ebc84e821e633b329b05e0e1
 
 ```{r, census_beds_separate}
