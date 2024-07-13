@@ -301,21 +301,6 @@ license_beds_sicu_df <- dbGetQuery(p2_connection, license_beds_sicu)
 license_beds_sicu_df
 ```
 
-<<<<<<< HEAD
-```{r}
-total_license_beds_icu_sicu <- "SELECT business_name AS hospital_name, SUM(license_beds) AS total_license_icu_sicu_beds
-FROM combined_table
-WHERE bed_id IN (4, 15)
-GROUP BY hospital_name
-ORDER BY total_license_icu_sicu_beds DESC
-LIMIT 10"
-
-
-total_license_beds_icu_sicu <- dbGetQuery(p2_connection, total_license_beds_icu_sicu)
-
-print(total_license_beds_icu_sicu)
-```
->>>>>>> 99f06c411af86ac2ebc84e821e633b329b05e0e1
 
 ```{r, census_beds_separate}
 # Sairah
