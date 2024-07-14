@@ -884,7 +884,7 @@ pivot_all_beds_visual_df <- all_beds_combined_visual_df %>%
 
 ```{r all_beds_visual}
 
-ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = interaction(bed_type, icu_sicu))) +
+ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = interaction(bed_type, icu_sicu, sep = " "))) +
   geom_bar(stat = "identity", position = "stack", width = 0.8) +
   facet_wrap(~ icu_sicu, ncol = 1, scales = "free_x") +
   labs(
@@ -892,7 +892,7 @@ ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_cou
     y = "Bed Count",
     fill = "Bed Type",
     title = "Hospitals with Highest Combined Bed Type Count for ICU and SICU Beds",
-    caption = "Figure 4D"
+    caption = "Figure 4D: Bed type breakdown between ICU and SICU counts for top 10 hospitals"
   ) +
   theme_classic() +
   theme(
@@ -917,3 +917,12 @@ To maintain cost efficiency when implementing a hiring intervention we analyzed 
 We visualized the distribution of ICU and SICU bed counts with stacked bar charts for license, census, and staffed beds in Figure 4A, 4B, and 4C, respectively. We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types to maximize cost-efficiency and avoid bed shortages. Because of this, we believe hospitals with high total bed counts are not necessarily better candidates if they only have more of one bed type. For example, the total bed count at Shands Hospital at The University of Florida in Figures 4A, 4B, and 4C shows a majority SICU beds and small portion of ICU beds. We would not recommend this hospital due to the potential ICU bed shortages.
 
 The two hospitals that best meet the cost-efficient criteria are The University of Maryland Medical Center and ___ (Jackson Memorial?)
+
+------------------------------------------------------------------------
+
+### Sources
+
+1. https://medium.com/illumination/mastering-conditional-logic-in-sql-a-deep-dive-into-case-when-statements-52f0aca9890c
+2. https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/interaction
+3. https://ggplot2-book.org/facet
+
