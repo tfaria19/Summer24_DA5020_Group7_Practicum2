@@ -39,27 +39,81 @@ summary(bed_fact_df)
 # Summary of business_df
 summary(business_df)
 
-# Basic histograms for outlier visualization
+# Histograms for outlier visualization
+# License
 ggplot(bed_fact_df, aes(x = license_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
-  scale_x_continuous(limits = c(-1, 3000)) +
+  scale_x_continuous(limits = c(-1, 2100)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv - License", x = "# of License Beds", y = "Frequency") +
-  theme_minimal()
+  labs(title = "Data Distribution - bed_fact.csv - License", 
+       x = "# of License Beds", 
+       y = "Frequency",
+       caption = "Figure 1a. Histogram showing distrubtion of license bed counts") +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", 
+                              margin = margin(t = 5, b = 5)),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black", face = "bold", 
+                              margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", 
+                            margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  )
 
+# Census
 ggplot(bed_fact_df, aes(x = census_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
-  scale_x_continuous(limits = c(-1, 3000)) +
+  scale_x_continuous(limits = c(-1, 2100)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv - Census", x = "# of Census Beds", y = "Frequency") +
-  theme_minimal()
+  labs(title = "Data Distribution - bed_fact.csv - License", 
+       x = "# of License Beds", 
+       y = "Frequency",
+       caption = "Figure 1a. Histogram showing distrubtion of license bed counts") +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", 
+                              margin = margin(t = 5, b = 5)),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black", face = "bold", 
+                              margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", 
+                            margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  )
 
+# Staffed
 ggplot(bed_fact_df, aes(x = staffed_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
-  scale_x_continuous(limits = c(-1, 3000)) +
+  scale_x_continuous(limits = c(-1, 2100)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv - Staffed", x = "# of Staffed Beds", y = "Frequency") +
-  theme_minimal()
+  labs(title = "Data Distribution - bed_fact.csv - License", 
+       x = "# of License Beds", 
+       y = "Frequency",
+       caption = "Figure 1a. Histogram showing distrubtion of license bed counts") +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", 
+                              margin = margin(t = 5, b = 5)),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black", face = "bold", 
+                              margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", 
+                            margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  )
 
 ```
 
