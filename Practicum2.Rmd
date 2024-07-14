@@ -364,7 +364,9 @@ license_beds_total_df
 ```{r, license_beds_visual}
 
 separate_license_beds_visual <- "SELECT business_name AS hospital_name,
+--- When bed_desc is ICU, the value is added to the total, else 0 is added ---
 SUM(CASE WHEN bed_desc = 'ICU' THEN license_beds ELSE 0 END) AS ICU_beds,
+--- When bed_desc is SICU, the value is added to the total, else 0 is added ---
 SUM(CASE WHEN bed_desc = 'SICU' THEN license_beds ELSE 0 END) AS SICU_beds,
 SUM(census_beds) AS total_icu_sicu_license_beds
 FROM combined_table
@@ -407,8 +409,8 @@ ggplot(pivot_license_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
   axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
-  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 10)),
+  plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
   plot.caption.position = "plot",
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
@@ -435,7 +437,9 @@ census_beds_total_df
 ```{r, census_beds_visual}
 
 separate_census_beds_visual <- "SELECT business_name AS hospital_name,
+--- When bed_desc is ICU, the value is added to the total, else 0 is added ---
 SUM(CASE WHEN bed_desc = 'ICU' THEN census_beds ELSE 0 END) AS ICU_beds,
+--- When bed_desc is SICU, the value is added to the total, else 0 is added ---
 SUM(CASE WHEN bed_desc = 'SICU' THEN census_beds ELSE 0 END) AS SICU_beds,
 SUM(census_beds) AS total_icu_sicu_census_beds
 FROM combined_table
@@ -478,8 +482,8 @@ ggplot(pivot_census_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, 
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
   axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
-  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 10)),
+  plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
   plot.caption.position = "plot",
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
@@ -489,6 +493,7 @@ ggplot(pivot_census_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, 
 ### Staffed Beds (ICU or SICU)
 
 ```{r, staffed_beds_total}
+
 get_staffed_beds_total <- "SELECT business_name AS hospital_name,
 --- Take the sum of the staffed beds in a new column total_icu_sicu_staffed_beds ---
 SUM(staffed_beds) AS total_icu_sicu_staffed_beds
@@ -512,17 +517,19 @@ total_staffed_beds
 
 ```{r staffed_visual}
 
-# Query for the visual
+# Query for the staffed visual
 staffed_beds_separate_visual <- "SELECT business_name AS hospital_name,
+                                 --- When bed_desc is ICU, the value is added to the total, else 0 is added ---
                                  SUM(CASE WHEN bed_desc = 'ICU' THEN staffed_beds ELSE 0 END) AS ICU_beds,
+                                 --- When bed_desc is SICU, the value is added to the total, else 0 is added ---
                                  SUM(CASE WHEN bed_desc = 'SICU' THEN staffed_beds ELSE 0 END) AS SICU_beds,
                                  SUM(staffed_beds) AS total_icu_sicu_staffed_beds
-                          FROM combined_table
-                          --- Only include rows where bed_id is 4 (ICU) or 15 (SICU) ---
-                          WHERE bed_desc IN ('ICU', 'SICU')
-                          GROUP BY hospital_name
-                          --- Arrange in descending order ---
-                          ORDER BY total_icu_sicu_staffed_beds DESC;"
+                                 FROM combined_table
+                                 --- Only include rows where bed_id is 4 (ICU) or 15 (SICU) ---
+                                 WHERE bed_desc IN ('ICU', 'SICU')
+                                 GROUP BY hospital_name
+                                 --- Arrange in descending order ---
+                                 ORDER BY total_icu_sicu_staffed_beds DESC;"
 
 # Create new dataframe for visual
 separate_staffed_beds_df <- dbGetQuery(p2_connection, staffed_beds_separate_visual) %>%
@@ -537,6 +544,7 @@ pivot_staffed_beds_df <- separate_staffed_beds_df %>%
 ```
 
 ```{r, staffed_visual_ggplot}
+
 # Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
 ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
@@ -544,8 +552,7 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   x = "Hospital Name",
   y = "Staffed Bed Count",
   fill = "Bed",
-  title = "Hospitals with highest combined ICU or SICU staffed bed
-  counts",
+  title = "Hospitals with highest combined ICU or SICU staffed bed counts",
   caption = "Figure 3C: ICU and SICU staffed beds combined with no minimum required count"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
@@ -556,8 +563,8 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
   axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
-  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 10)),
+  plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
   plot.caption.position = "plot",
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
@@ -598,17 +605,19 @@ license_beds_min1_df
 ```{r, license_beds_min1_visual}
 
 license_beds_min1_visual <- "SELECT business_name AS hospital_name,
+                                 --- When bed_id is 4, the value is added to the total, else 0 is added ---
                                  SUM(CASE WHEN bed_id = 4 THEN license_beds ELSE 0 END) AS ICU_beds,
+                                 --- When bed_id is 15, the value is added to the total, else 0 is added ---
                                  SUM(CASE WHEN bed_id = 15 THEN license_beds ELSE 0 END) AS SICU_beds,
                                  SUM(license_beds) AS total_icu_sicu_beds
-                          FROM combined_table
-                          --- Include ICU and SICU ---
-                          WHERE (bed_id = 4 OR bed_id = 15)
-                          GROUP BY hospital_name
-                          --- Ensures at least 1 bed is counted in SICU and ICU ---
-                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
-                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
-                          ORDER BY total_icu_sicu_beds DESC;"
+                             FROM combined_table
+                             --- Include ICU and SICU ---
+                             WHERE (bed_id = 4 OR bed_id = 15)
+                             GROUP BY hospital_name
+                             --- Ensures at least 1 bed is counted in SICU and ICU ---
+                             HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                               AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                             ORDER BY total_icu_sicu_beds DESC;"
 
 license_beds_min1_visual_df <- dbGetQuery(p2_connection, license_beds_min1_visual) %>%
   as_tibble %>%
@@ -642,8 +651,8 @@ ggplot(pivot_min1_license_beds_visual_df, aes(reorder(hospital_name, -bed_count)
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
   axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
-  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 10)),
+  plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
   plot.caption.position = "plot",
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
@@ -670,8 +679,11 @@ census_beds_min1_df
 ```
 
 ```{r, census_beds_min1_visual}
+
 census_beds_min1_visual <- "SELECT business_name AS hospital_name,
+--- When bed_id is 4, the value is added to the total, else 0 is added ---
 SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_beds,
+--- When bed_id is 15, the value is added to the total, else 0 is added ---
 SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_beds,
 SUM(census_beds) AS total_icu_sicu_beds
 FROM combined_table
@@ -714,19 +726,19 @@ ggplot(pivot_min1_census_beds_visual_df, aes(reorder(hospital_name, -bed_count),
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
   axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
-  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 10)),
+  plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
   plot.caption.position = "plot",
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
   coord_flip()
-
 
 ```
 
 ### Staffed Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
 ```{r, staffed_beds_min1}
+
 staffed_beds_min1 <- "SELECT business_name AS hospital_name, 
 SUM(census_beds) AS total_staffed_beds_min1
 FROM combined_table
@@ -742,8 +754,11 @@ staffed_beds_min1_df
 ```
 
 ```{r staffed_beds_min1_visual}
+
 staffed_beds_min1_visual <- "SELECT business_name AS hospital_name,
+                                 --- When bed_id is 4, the value is added to the total, else 0 is added ---
                                  SUM(CASE WHEN bed_id = 4 THEN staffed_beds ELSE 0 END) AS ICU_beds,
+                                 --- When bed_id is 15, the value is added to the total, else 0 is added ---
                                  SUM(CASE WHEN bed_id = 15 THEN staffed_beds ELSE 0 END) AS SICU_beds,
                                  SUM(staffed_beds) AS total_icu_sicu_beds
                           FROM combined_table
@@ -769,6 +784,7 @@ pivot_min1_staffed_beds_visual_df <- staffed_beds_min1_visual_df %>%
 ```
 
 ```{r staffed_beds_min1_visual}
+
 # Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
 ggplot(pivot_min1_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
@@ -787,8 +803,8 @@ ggplot(pivot_min1_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count)
   legend.title = element_text(face = "bold"),
   axis.text.y = element_text(color = "black"),
   axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
-  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
-  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 10)),
+  plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
   plot.caption.position = "plot",
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
@@ -816,10 +832,12 @@ The University of Maryland Medical Center has an even distribution of ICU and SI
 
 ## Final Recommendation
 
-```{r}
-### Rough draft query to use for final recommendation ###
+```{r combined_visual}
+
 all_beds_combined_visual <- "SELECT business_name AS hospital_name,
+                                 --- When bed_id is 4, the value is added to the total, else 0 is added (for each bed type, respectively) ---
                                  SUM(CASE WHEN bed_id = 4 THEN license_beds ELSE 0 END) AS ICU_license_beds,
+                                 --- When bed_id is 15, the value is added to the total, else 0 is added (for each bed type, respectively) ---
                                  SUM(CASE WHEN bed_id = 15 THEN license_beds ELSE 0 END) AS SICU_license_beds,
                                  SUM(license_beds) AS total_license_icu_sicu_beds,
                                  SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_census_beds,
@@ -851,11 +869,13 @@ all_beds_combined_visual_df
 
 pivot_all_beds_visual_df <- all_beds_combined_visual_df %>%
   pivot_longer(
+    # Pivot License, Census, and Staffed ICU and SICU columns 
     cols = starts_with("License") | starts_with("Census") | starts_with("Staffed"),
     names_to = c("bed_type", "icu_sicu"),
     names_sep = " ",
     values_to = "bed_count"
   ) %>%
+  # Create factor levels for stacked bar
   mutate(
     bed_type = factor(bed_type, levels = c("License", "Census", "Staffed")),
     icu_sicu = factor(icu_sicu, levels = c("ICU", "SICU"))
@@ -863,7 +883,7 @@ pivot_all_beds_visual_df <- all_beds_combined_visual_df %>%
 ```
 
 ```{r all_beds_visual}
-### Rough draft visual to use for final recommendation ###
+
 ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = interaction(bed_type, icu_sicu))) +
   geom_bar(stat = "identity", position = "stack", width = 0.8) +
   facet_wrap(~ icu_sicu, ncol = 1, scales = "free_x") +
@@ -876,17 +896,24 @@ ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_cou
   ) +
   theme_classic() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text = element_text(color = "black"),
+    axis.title.y = element_text(face = "bold", margin = margin(r = 10)),
+    axis.title.x = element_text(face = "bold", margin = margin(t = 10)),
+    legend.title = element_text(face = "bold"),
     legend.position = "right",
-    plot.title = element_text(hjust = 0.7, face = "bold"),
-    plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+    plot.title = element_text(hjust = 0.7, face = "bold", margin = margin(b = 10)),
+    plot.margin = margin(t = 20, r = 20, l = 20, b = 10),
     plot.caption.position = "plot",
     plot.caption = element_text(face = "italic", hjust = 1)
   ) +
-  scale_y_discrete(expand = c(0, 1)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   coord_flip()
 ```
 
-\*\*\* Draft \*\*\* To maintain cost efficiency when implementing a hiring intervention we analyzed the volume of ICU and SICU beds across three bed types: license, census, and staffed beds. We derived the top 10 hospitals with sufficient volume for either SICU or ICU beds and the top 10 hospitals with at least 1 of both types.
+\*\*\* Draft \*\*\*
 
-We visualized the distribution of ICU and SICU bed counts with stacked bar charts for license, census, and staffed beds in Figure 4A, 4B, and 4C, respectively. We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types to maximize cost-efficiency and avoid bed shortages. Because of this, we believe hospitals with high total bed counts are not necessarily better candidates if they only have more of one bed type. For example, the total bed count at Shands Hospital at The University of Florida in Figures 4A, 4B, and 4C shows a majority SICU beds and small portion of ICU beds. We would not recommend this hospital due to the potential ICU bed shortages. However, we would recommend Jackson Memorial Hospital, which has less overall beds compared to Shands but has an equal distribution of both types.
+To maintain cost efficiency when implementing a hiring intervention we analyzed the volume of ICU and SICU beds across three bed types: license, census, and staffed beds. We derived the top 10 hospitals with sufficient volume for either SICU or ICU beds and the top 10 hospitals with at least 1 of both types.
+
+We visualized the distribution of ICU and SICU bed counts with stacked bar charts for license, census, and staffed beds in Figure 4A, 4B, and 4C, respectively. We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types to maximize cost-efficiency and avoid bed shortages. Because of this, we believe hospitals with high total bed counts are not necessarily better candidates if they only have more of one bed type. For example, the total bed count at Shands Hospital at The University of Florida in Figures 4A, 4B, and 4C shows a majority SICU beds and small portion of ICU beds. We would not recommend this hospital due to the potential ICU bed shortages.
+
+The two hospitals that best meet the cost-efficient criteria are The University of Maryland Medical Center and ___ (Jackson Memorial?)
