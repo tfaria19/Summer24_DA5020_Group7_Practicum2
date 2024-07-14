@@ -520,62 +520,103 @@ It should be noted that despite having the highest number of ICU and SICU beds a
 
 ------------------------------------------------------------------------
 
-## Follow-up Analysis for Leadership (identifying hospitals with both ICU and SICU volume sufficiency)
+## Follow-up Analysis for Leadership (identifying hospitals with at least 1 of both ICU and SICU)
 
 ### License Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
-```{r, license_beds_combined}
-license_beds_combined <- "SELECT business_name AS hospital_name, 
-SUM(license_beds) AS total_license_beds_combined
+```{r, license_beds_min1}
+get_license_beds_min1 <- "SELECT business_name AS hospital_name, 
+SUM(license_beds) AS total_license_beds_min1
 FROM combined_table
 WHERE (bed_id = 4 OR bed_id = 15)
 GROUP BY hospital_name
 HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
 AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
-ORDER BY total_license_beds_combined DESC
+ORDER BY total_license_beds_min1 DESC
 LIMIT 10;"
 
-license_beds_combined_df <- dbGetQuery(p2_connection, license_beds_combined) %>%
+license_beds_min1_df <- dbGetQuery(p2_connection, get_license_beds_min1) %>%
   as_tibble()
-license_beds_combined_df
+license_beds_min1_df
+
+```
+
+```{r, license_beds_min1_visual}
+
+license_beds_min1_visual <- "SELECT business_name AS hospital_name,
+                                 SUM(CASE WHEN bed_id = 4 THEN license_beds ELSE 0 END) AS ICU_beds,
+                                 SUM(CASE WHEN bed_id = 15 THEN license_beds ELSE 0 END) AS SICU_beds,
+                                 SUM(license_beds) AS total_icu_sicu_beds
+                          FROM combined_table
+                          --- Include ICU and SICU ---
+                          WHERE (bed_id = 4 OR bed_id = 15)
+                          GROUP BY hospital_name
+                          --- Ensures at least 1 bed is counted in SICU and ICU ---
+                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
+                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
+                          ORDER BY total_icu_sicu_beds DESC;"
+
+license_beds_min1_visual_df <- dbGetQuery(p2_connection, license_beds_min1_visual) %>%
+  as_tibble %>%
+  slice(1:10) %>%
+  rename(ICU = ICU_beds,
+         SICU = SICU_beds)
+
+license_beds_min1_visual_df
+
+pivot_min1_license_beds_visual_df <- license_beds_min1_visual_df %>%
+  pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
+```
+
+```{r, license_beds_min1_visual_ggplot}
+
+# Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
+ggplot(pivot_min1_license_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
+  geom_bar(stat = "identity") +
+  labs(
+  x = "Hospital Name",
+  y = "license Bed Count",
+  fill = "Bed Type",
+  title = "Hospitals with Highest Total ICU and SICU License Beds (Min. 1)",
+  caption = "Figure 4C: Minimum 1 ICU and SICU license bed per hospital"
+  ) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme_classic() +
+  theme(
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", margin = margin(t = 5, b = 5)),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  ) +
+  coord_flip()
 
 ```
 
 ### Census Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
-```{r, census_beds_combined}
-census_beds_combined_visual <- "SELECT business_name AS hospital_name,
-                                 SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_beds,
-                                 SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_beds,
-                                 SUM(census_beds) AS total_census_icu_sicu_beds
-                          FROM combined_table
-                          WHERE (bed_id = 4 OR bed_id = 15)
-                          GROUP BY hospital_name
-                          HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
-                             AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
-                          ORDER BY total_census_icu_sicu_beds DESC
-                          LIMIT 10;"
+```{r, census_beds_min1}
 
-census_beds_combined_visual_df <- dbGetQuery(p2_connection, census_beds_combined_visual) %>%
-
-census_beds_combined <- "SELECT business_name AS hospital_name, 
-SUM(census_beds) AS total_census_beds_combined
+census_beds_min1 <- "SELECT business_name AS hospital_name, 
+SUM(census_beds) AS total_census_beds_min1
 FROM combined_table
 WHERE (bed_id = 4 OR bed_id = 15)
 GROUP BY hospital_name
 HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
 AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
-ORDER BY total_census_beds_combined DESC
+ORDER BY total_census_beds_min1 DESC
 LIMIT 10;"
 
-census_beds_combined_df <- dbGetQuery(p2_connection, census_beds_combined) %>%
-  as_tibble()
-
-census_beds_combined_df
+census_beds_min1_df <- dbGetQuery(p2_connection, census_beds_min1)
+census_beds_min1_df
 ```
 
-```{r}
-census_beds_combined_visual <- "SELECT business_name AS hospital_name,
+```{r, census_beds_min1_visual}
+census_beds_min1_visual <- "SELECT business_name AS hospital_name,
 SUM(CASE WHEN bed_id = 4 THEN census_beds ELSE 0 END) AS ICU_beds,
 SUM(CASE WHEN bed_id = 15 THEN census_beds ELSE 0 END) AS SICU_beds,
 SUM(census_beds) AS total_icu_sicu_beds
@@ -587,64 +628,67 @@ AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
 ORDER BY total_icu_sicu_beds DESC
 LIMIT 10;"
 
-census_beds_combined_df <- dbGetQuery(p2_connection, census_beds_combined_visual) %>%
+census_beds_min1_visual_df <- dbGetQuery(p2_connection, census_beds_min1_visual) %>%
   as_tibble %>%
   slice(1:10) %>%
   rename(ICU = ICU_beds,
          SICU = SICU_beds)
 
-census_beds_combined_visual_df
+census_beds_min1_visual_df
 
-pivot_combined_census_beds_visual_df <- census_beds_combined_visual_df %>%
+pivot_min1_census_beds_visual_df <- census_beds_min1_visual_df %>%
   pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
 ```
 
-```{r}
-# Bar Chart for ICU and SICU Census Beds for Top 10 Hospitals 
-ggplot(pivot_combined_census_beds_df, aes(x = reorder(hospital_name, -bed_count), y = bed_count, fill = bed_type)) +
+```{r, census_beds_min1_visual_ggplot}
+
+# Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
+ggplot(pivot_min1_census_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
   labs(
-    x = "Hospital Name",
-    y = "Census Bed Count",
-    fill = "Bed",
-    title = "Hospitals with the Highest Combined ICU and SICU Census Bed Counts"
+  x = "Hospital Name",
+  y = "Census Bed Count",
+  fill = "Bed Type",
+  title = "Hospitals with Highest Total ICU and SICU Census Beds (Min. 1)",
+  caption = "Figure 4C: Minimum 1 ICU and SICU census bed per hospital"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-  scale_x_discrete(labels = function(x) str_wrap(x, width = 15)) +
   theme_classic() +
   theme(
-    axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 9, color = "black"),
-    axis.title.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    legend.title = element_text(face = "bold"),
-    axis.text.y = element_text(color = "black"),
-    axis.title.y = element_text(color = "black"),
-    plot.title = element_text(hjust = 0.1, face = "bold", margin = margin(b = 20)),
-    plot.margin = margin(t = 30, r = 20, l = 20, b = 20)
-  )
+  axis.text.x = element_text(size = 9, color = "black"),
+  axis.title.x = element_text(color = "black", face = "bold", margin = margin(t = 5, b = 5)),
+  legend.title = element_text(face = "bold"),
+  axis.text.y = element_text(color = "black"),
+  axis.title.y = element_text(color = "black", face = "bold", margin = margin(r = 10)),
+  plot.title = element_text(hjust = 0.8, face = "bold", margin = margin(b = 20)),
+  plot.margin = margin(t = 30, r = 20, l = 20, b = 10),
+  plot.caption.position = "plot",
+  plot.caption = element_text(face = "italic", hjust = 1)
+  ) +
+  coord_flip()
 
 
 ```
 
 ### Staffed Beds (ICU and SICU Combined - min. 1 bed of each type per hospital)
 
-```{r, staffed_beds_combined}
-staffed_beds_combined <- "SELECT business_name AS hospital_name, 
-SUM(census_beds) AS total_staffed_beds_combined
+```{r, staffed_beds_min1}
+staffed_beds_min1 <- "SELECT business_name AS hospital_name, 
+SUM(census_beds) AS total_staffed_beds_min1
 FROM combined_table
 WHERE (bed_id = 4 OR bed_id = 15)
 GROUP BY hospital_name
 HAVING COUNT(DISTINCT CASE WHEN bed_id = 4 THEN 1 END) > 0
 AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
-ORDER BY total_staffed_beds_combined DESC
+ORDER BY total_staffed_beds_min1 DESC
 LIMIT 10;"
 
-staffed_beds_combined_df <- dbGetQuery(p2_connection, staffed_beds_combined)
-staffed_beds_combined_df
+staffed_beds_min1_df <- dbGetQuery(p2_connection, staffed_beds_min1)
+staffed_beds_min1_df
 ```
 
-```{r staffed_beds_combined_visual}
-staffed_beds_combined_visual <- "SELECT business_name AS hospital_name,
+```{r staffed_beds_min1_visual}
+staffed_beds_min1_visual <- "SELECT business_name AS hospital_name,
                                  SUM(CASE WHEN bed_id = 4 THEN staffed_beds ELSE 0 END) AS ICU_beds,
                                  SUM(CASE WHEN bed_id = 15 THEN staffed_beds ELSE 0 END) AS SICU_beds,
                                  SUM(staffed_beds) AS total_icu_sicu_beds
@@ -657,27 +701,28 @@ staffed_beds_combined_visual <- "SELECT business_name AS hospital_name,
                              AND COUNT(DISTINCT CASE WHEN bed_id = 15 THEN 1 END) > 0
                           ORDER BY total_icu_sicu_beds DESC;"
 
-staffed_beds_combined_visual_df <- dbGetQuery(p2_connection, staffed_beds_combined_visual) %>%
+staffed_beds_min1_visual_df <- dbGetQuery(p2_connection, staffed_beds_min1_visual) %>%
   as_tibble %>%
   slice(1:10) %>%
   rename(ICU = ICU_beds,
          SICU = SICU_beds)
 
-staffed_beds_combined_visual_df
+staffed_beds_min1_visual_df
 
-pivot_combined_staffed_beds_visual_df <- staffed_beds_combined_visual_df %>%
+pivot_min1_staffed_beds_visual_df <- staffed_beds_min1_visual_df %>%
   pivot_longer(cols = c(ICU, SICU), names_to = "bed_type", values_to = "bed_count")
+
 ```
 
-```{r staffed_beds_combined_visual}
+```{r staffed_beds_min1_visual}
 # Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
-ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
+ggplot(pivot_min1_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
   geom_bar(stat = "identity") +
   labs(
   x = "Hospital Name",
   y = "Staffed Bed Count",
   fill = "Bed",
-  title = "Hospitals with Highest Combined Total ICU and SICU Staffed Beds",
+  title = "Hospitals with Highest Total ICU and SICU Staffed Beds",
   caption = "Figure 4C: Minimum 1 ICU and SICU staffed bed per hospital"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
@@ -694,6 +739,7 @@ ggplot(pivot_combined_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_co
   plot.caption = element_text(face = "italic", hjust = 1)
   ) +
   coord_flip()
+
 ```
 
 ### Interpretation of Findings (Pt. 2)
