@@ -818,6 +818,8 @@ Leadership was interested in hospitals that had a sufficient volume of both ICU 
 
 -   License Beds
 
+We maintain that the University of Maryland still has the highest combined total of license ICU and SICU beds. The share is evenly split between both bed types. While other hospitals may have comparable or more of one bed type vs. the other (UC Health University Hospital has more ICU, while Carolinas Medical Center has comparable SICU but far less ICU when evaluated side-by-side), Maryland remains the best-balanced choice.
+
 -   Census Beds
 
 We found from 3a that Shands Hospital at University of Florida had the most census ICU and SICU beds. However, with further investigation and making sure that the hospitals had at least one of each, ICU and SICU, we find that leadership might be interested in different hospitals. Shands Hospital at the University of Florida have more than one ICU and SICU census beds. However, there is not an equal number of ICU and SICU census beds. The best hospitals for this pilot intervention program would be Cedars Sinai Health System, Jackson Memorial Hospital, and University of Maryland Medical Center. These all have roughly the same amount of ICU and SICU census beds.
