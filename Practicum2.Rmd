@@ -48,7 +48,7 @@ ggplot(bed_fact_df, aes(x = license_beds)) +
   labs(title = "Data Distribution - bed_fact.csv - License", 
        x = "# of License Beds", 
        y = "Frequency",
-       caption = "Figure 1a. Histogram showing distrubtion of license bed counts") +
+       caption = "Figure 1. Histogram showing distrubtion of license bed counts") +
   theme_classic() +
   theme(
   axis.text.x = element_text(size = 9, color = "black"),
@@ -73,7 +73,7 @@ ggplot(bed_fact_df, aes(x = census_beds)) +
   labs(title = "Data Distribution - bed_fact.csv - License", 
        x = "# of License Beds", 
        y = "Frequency",
-       caption = "Figure 1a. Histogram showing distrubtion of license bed counts") +
+       caption = "Figure 2. Histogram showing distrubtion of license bed counts") +
   theme_classic() +
   theme(
   axis.text.x = element_text(size = 9, color = "black"),
@@ -98,7 +98,7 @@ ggplot(bed_fact_df, aes(x = staffed_beds)) +
   labs(title = "Data Distribution - bed_fact.csv - License", 
        x = "# of License Beds", 
        y = "Frequency",
-       caption = "Figure 1a. Histogram showing distrubtion of license bed counts") +
+       caption = "Figure 3. Histogram showing distrubtion of license bed counts") +
   theme_classic() +
   theme(
   axis.text.x = element_text(size = 9, color = "black"),
@@ -329,7 +329,7 @@ if (nrow(duplicate_keys) == 0) {
 
 ### Example Query for Section 3a:
 
-``` SQL
+``` sql
 SELECT business_name AS hospital_name,
 --- Take the sum of the staffed beds in a new column total_icu_sicu_staffed_beds ---
 SUM(staffed_beds) AS total_icu_sicu_staffed_beds
@@ -399,7 +399,7 @@ ggplot(pivot_license_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   y = "License Bed Count",
   fill = "Bed Type",
   title = "Hospitals with Highest Total ICU or SICU License Beds",
-  caption = "Figure 1C: ICU and SICU license beds combined with no minimum required count"
+  caption = "Figure 4: ICU and SICU license beds combined with no minimum required count"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   theme_classic() +
@@ -472,7 +472,7 @@ ggplot(pivot_census_beds_df, aes(reorder(hospital_name, -bed_count), bed_count, 
   y = "Census Bed Count",
   fill = "Bed Type",
   title = "Hospitals with Highest Total ICU or SICU Census Beds",
-  caption = "Figure 2C: ICU and SICU census beds combined with no minimum required count"
+  caption = "Figure 5: ICU and SICU census beds combined with no minimum required count"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   theme_classic() +
@@ -553,7 +553,7 @@ ggplot(pivot_staffed_beds_df, aes(reorder(hospital_name, -bed_count), bed_count,
   y = "Staffed Bed Count",
   fill = "Bed",
   title = "Hospitals with highest combined ICU or SICU staffed bed counts",
-  caption = "Figure 3C: ICU and SICU staffed beds combined with no minimum required count"
+  caption = "Figure 6: ICU and SICU staffed beds combined with no minimum required count"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   theme_classic() +
@@ -641,7 +641,7 @@ ggplot(pivot_min1_license_beds_visual_df, aes(reorder(hospital_name, -bed_count)
   y = "license Bed Count",
   fill = "Bed Type",
   title = "Hospitals with Highest Total ICU and SICU License Beds (Min. 1)",
-  caption = "Figure 4C: Minimum 1 ICU and SICU license bed per hospital"
+  caption = "Figure 7: Minimum 1 ICU and SICU license bed per hospital"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   theme_classic() +
@@ -716,7 +716,7 @@ ggplot(pivot_min1_census_beds_visual_df, aes(reorder(hospital_name, -bed_count),
   y = "Census Bed Count",
   fill = "Bed Type",
   title = "Hospitals with Highest Total ICU and SICU Census Beds (Min. 1)",
-  caption = "Figure 4C: Minimum 1 ICU and SICU census bed per hospital"
+  caption = "Figure 8: Minimum 1 ICU and SICU census bed per hospital"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   theme_classic() +
@@ -783,7 +783,7 @@ pivot_min1_staffed_beds_visual_df <- staffed_beds_min1_visual_df %>%
 
 ```
 
-```{r staffed_beds_min1_visual}
+```{r staffed_beds_min1_visual_ggplot}
 
 # Stacked bar for better visualization of ICU and SICU beds for top 10 hospitals
 ggplot(pivot_min1_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = bed_type)) +
@@ -793,7 +793,7 @@ ggplot(pivot_min1_staffed_beds_visual_df, aes(reorder(hospital_name, -bed_count)
   y = "Staffed Bed Count",
   fill = "Bed",
   title = "Hospitals with Highest Total ICU and SICU Staffed Beds",
-  caption = "Figure 4C: Minimum 1 ICU and SICU staffed bed per hospital"
+  caption = "Figure 9: Minimum 1 ICU and SICU staffed bed per hospital"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   theme_classic() +
@@ -886,13 +886,13 @@ pivot_all_beds_visual_df <- all_beds_combined_visual_df %>%
 
 ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_count, fill = interaction(bed_type, icu_sicu, sep = " "))) +
   geom_bar(stat = "identity", position = "stack", width = 0.8) +
-  facet_wrap(~ icu_sicu, ncol = 1, scales = "free_x") +
+  facet_wrap(~ icu_sicu, ncol = 1, scales = "fixed") +
   labs(
     x = "Hospital Name",
     y = "Bed Count",
     fill = "Bed Type",
     title = "Hospitals with Highest Combined Bed Type Count for ICU and SICU Beds",
-    caption = "Figure 4D: Bed type breakdown between ICU and SICU counts for top 10 hospitals"
+    caption = "Figure 10: Bed type breakdown between ICU and SICU counts for top 10 hospitals"
   ) +
   theme_classic() +
   theme(
@@ -910,19 +910,16 @@ ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_cou
   coord_flip()
 ```
 
-\*\*\* Draft \*\*\*
-
 To maintain cost efficiency when implementing a hiring intervention we analyzed the volume of ICU and SICU beds across three bed types: license, census, and staffed beds. We derived the top 10 hospitals with sufficient volume for either SICU or ICU beds and the top 10 hospitals with at least 1 of both types.
 
 We visualized the distribution of ICU and SICU bed counts with stacked bar charts for license, census, and staffed beds in Figure 4A, 4B, and 4C, respectively. We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types to maximize cost-efficiency and avoid bed shortages. Because of this, we believe hospitals with high total bed counts are not necessarily better candidates if they only have more of one bed type. For example, the total bed count at Shands Hospital at The University of Florida in Figures 4A, 4B, and 4C shows a majority SICU beds and small portion of ICU beds. We would not recommend this hospital due to the potential ICU bed shortages.
 
-The two hospitals that best meet the cost-efficient criteria are The University of Maryland Medical Center and ___ (Jackson Memorial?)
+The two hospitals that best meet the cost-efficient criteria are The University of Maryland Medical Center and Jackson Memorial Hospital.
 
 ------------------------------------------------------------------------
 
 ### Sources
 
-1. https://medium.com/illumination/mastering-conditional-logic-in-sql-a-deep-dive-into-case-when-statements-52f0aca9890c
-2. https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/interaction
-3. https://ggplot2-book.org/facet
-
+1.  <https://medium.com/illumination/mastering-conditional-logic-in-sql-a-deep-dive-into-case-when-statements-52f0aca9890c>
+2.  <https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/interaction>
+3.  <https://ggplot2-book.org/facet>
