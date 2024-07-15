@@ -70,10 +70,10 @@ ggplot(bed_fact_df, aes(x = census_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
   scale_x_continuous(limits = c(-1, 2100)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv - License", 
-       x = "# of License Beds", 
+  labs(title = "Data Distribution - bed_fact.csv - Census", 
+       x = "# of Census Beds", 
        y = "Frequency",
-       caption = "Figure 2. Histogram showing distrubtion of license bed counts") +
+       caption = "Figure 2. Histogram showing distrubtion of census bed counts") +
   theme_classic() +
   theme(
   axis.text.x = element_text(size = 9, color = "black"),
@@ -95,10 +95,10 @@ ggplot(bed_fact_df, aes(x = staffed_beds)) +
   geom_histogram(binwidth = 2, color = "black") +
   scale_x_continuous(limits = c(-1, 2100)) +
   scale_y_continuous(limits = c(-1, 3000)) +
-  labs(title = "Data Distribution - bed_fact.csv - License", 
-       x = "# of License Beds", 
+  labs(title = "Data Distribution - bed_fact.csv - Staffed", 
+       x = "# of Staffed Beds", 
        y = "Frequency",
-       caption = "Figure 3. Histogram showing distrubtion of license bed counts") +
+       caption = "Figure 3. Histogram showing distrubtion of staffed bed counts") +
   theme_classic() +
   theme(
   axis.text.x = element_text(size = 9, color = "black"),
