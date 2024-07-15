@@ -186,6 +186,7 @@ dbWriteTable(p2_connection, "business_table", business_df, overwrite = TRUE, row
 -   combined_table is created from the existing fact/dimension tables and then loaded into combined_df for downstream R analysis
 
 ```{r, combined_table}
+
 # Create combined_table, if it doesn't already exist
 if (!table_exists(p2_connection, "combined_table")) {
   dbExecute(p2_connection, "
@@ -914,9 +915,9 @@ ggplot(pivot_all_beds_visual_df, aes(reorder(hospital_name, -bed_count), bed_cou
 
 To maintain cost efficiency when implementing a hiring intervention we analyzed the volume of ICU and SICU beds across three bed types: license, census, and staffed beds. We derived the top 10 hospitals with sufficient volume for either SICU or ICU beds and the top 10 hospitals with at least 1 of both types.
 
-We visualized the distribution of ICU and SICU bed counts with stacked bar charts for license, census, and staffed beds in Figure 4A, 4B, and 4C, respectively. We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types to maximize cost-efficiency and avoid bed shortages. Because of this, we believe hospitals with high total bed counts are not necessarily better candidates if they only have more of one bed type. For example, the total bed count at Shands Hospital at The University of Florida in Figures 4A, 4B, and 4C shows a majority SICU beds and small portion of ICU beds. We would not recommend this hospital due to the potential ICU bed shortages.
+We visualized the distribution of ICU and SICU bed counts with stacked bar charts for license, census, and staffed beds in Figure 10, respectively. We recommend considering hospitals that not only have at least 1 of each type of bed, but an equal distribution of both types to maximize cost-efficiency and avoid bed shortages. Because of this, we believe hospitals with high total bed counts are not necessarily better candidates if they only have more of one bed type. For example, the total bed count at Shands Hospital at The University of Florida in Figure 10 shows a majority SICU beds and small portion of ICU beds. We would not recommend this hospital due to the potential ICU bed shortages.
 
-The two hospitals that best meet the cost-efficient criteria are The University of Maryland Medical Center and Jackson Memorial Hospital.
+The two hospitals that best meet the cost-efficient criteria are The University of Maryland Medical Center and Jackson Memorial Hospital. We believe both offer a balanced distribution of ICU and SICU beds while maintaining an appropriate total bed count for beginning the intervention program.
 
 ------------------------------------------------------------------------
 
