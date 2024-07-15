@@ -827,7 +827,7 @@ We found from 3a that Shands Hospital at University of Florida had the most cens
 
 -   Staffed Beds
 
-With the added condition that hospitals must have at least 1 ICU and SICU bed type, the resulting top 10 hospitals are quite different. 5 hospitals have been displaced that were previously shown in Figure 3C, the most notable being Vidant Medical Center and Ray Childrens Hospital and Health Center. Despite having a high count of ICU beds, neither had any SICU beds. In Figure 4C we can see the distribution of ICU and SICU staffed beds across the hospitals.
+With the added condition that hospitals must have at least 1 ICU and SICU bed type, the resulting top 10 hospitals are quite different. 5 hospitals have been displaced that were previously shown in Figure 6, the most notable being Vidant Medical Center and Ray Childrens Hospital and Health Center. Despite having a high count of ICU beds, neither had any SICU beds. In Figure 9 we can see the distribution of ICU and SICU staffed beds across the hospitals.
 
 The University of Maryland Medical Center has an even distribution of ICU and SICU staffed beds. This is advantageous for cost-efficiency to ensure neither ICU or SICU beds counts are too low when rolling out the intervention program. Shands Hospital at the University of Florida has significantly more SICU beds than ICU beds, so despite having the second highest bed count, the need for a relatively even spread of ICU and SICU beds makes it difficult to recommend.
 
